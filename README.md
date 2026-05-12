@@ -1,7 +1,5 @@
 # Placement Records Management System (PRMS)
 
-**CS621 — Database Systems | IIIT Guwahati**  
-**Author:** Hrithik | M.Tech CSE
 
 ---
 
@@ -284,7 +282,4 @@ Delete the out\ folder, then run compile.bat again.
 
 ---
 
-## License
 
-Academic project for CS621 Database Systems, IIIT Guwahati.  
-© 2025 Hrithik. All rights reserved.
