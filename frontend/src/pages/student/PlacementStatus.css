@@ -1,0 +1,567 @@
+.ps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 0 32px;
+  max-width: 760px;
+}
+
+/* ── Placed card ─────────────────────────────────────────────────────────── */
+
+.ps-placed-card {
+  background: linear-gradient(135deg, #052e16 0%, #14532d 50%, #166534 100%);
+  border-radius: 16px;
+  padding: 40px 36px;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(22, 163, 74, 0.3);
+}
+
+.ps-confetti-row {
+  font-size: 1.6rem;
+  margin-bottom: 18px;
+  letter-spacing: 4px;
+}
+
+.ps-placed-headline {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+
+.ps-placed-sub {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 28px;
+}
+
+.ps-company-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.ps-company-name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.ps-tier-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+  padding: 4px 14px;
+  border-radius: 20px;
+}
+
+/* ── Detail grid ─────────────────────────────────────────────────────────── */
+
+.ps-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 480px) {
+  .ps-detail-grid { grid-template-columns: 1fr; }
+}
+
+.ps-detail-item { text-align: left; }
+
+.ps-detail-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.ps-detail-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ps-pkg-value {
+  font-size: 1.2rem;
+  color: #86efac;
+}
+
+.ps-placed-message {
+  font-size: 0.82rem;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* ── Journey card ────────────────────────────────────────────────────────── */
+
+.ps-journey-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.ps-journey-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16px;
+}
+
+.ps-journey-steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ps-journey-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ps-j-icon { font-size: 1.2rem; }
+.ps-j-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.ps-step-done   .ps-j-label { color: #16a34a; }
+.ps-step-placed .ps-j-label { color: #15803d; font-size: 0.7rem; }
+
+.ps-journey-arrow {
+  font-size: 1rem;
+  color: #e2e8f0;
+  font-weight: 700;
+  padding: 0 4px;
+  margin-bottom: 16px;
+}
+
+/* ── Pending card ────────────────────────────────────────────────────────── */
+
+.ps-pending-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 40px 36px;
+  text-align: center;
+}
+
+.ps-pending-icon {
+  font-size: 3rem;
+  margin-bottom: 14px;
+}
+
+.ps-pending-headline {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.ps-pending-sub {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 32px;
+}
+
+/* ── Tips grid ───────────────────────────────────────────────────────────── */
+
+.ps-tips-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  text-align: left;
+}
+
+@media (max-width: 480px) {
+  .ps-tips-grid { grid-template-columns: 1fr; }
+}
+
+.ps-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.ps-tip-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+.ps-tip-body { min-width: 0; }
+
+.ps-tip-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 3px;
+}
+
+.ps-tip-text {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* ── Progress tracker ────────────────────────────────────────────────────── */
+
+.ps-tracker-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 24px 28px;
+}
+
+.ps-tracker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.ps-tracker-title {
+  font-size: 0.87rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.ps-tracker-rejected-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.ps-tracker-placed-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.ps-tracker-steps {
+  display: flex;
+  align-items: flex-start;
+}
+
+.ps-tracker-col {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.ps-tracker-col:last-child { flex: 0 0 auto; }
+
+.ps-ts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ps-ts-connector {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  margin-top: 19px;
+  min-width: 16px;
+}
+
+.ps-ts-conn-done { background: #16a34a; }
+
+.ps-ts-dot {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  font-weight: 800;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ps-ts-done .ps-ts-dot {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.ps-ts-active .ps-ts-dot {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.15);
+}
+
+.ps-ts-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  max-width: 72px;
+}
+
+.ps-ts-done .ps-ts-label   { color: #16a34a; }
+.ps-ts-active .ps-ts-label { color: #2563eb; font-weight: 700; }
+
+.ps-tracker-rejected-note {
+  margin-top: 18px;
+  padding: 10px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #dc2626;
+}
+
+@media (max-width: 540px) {
+  .ps-tracker-card { padding: 18px 16px; }
+  .ps-ts-dot { width: 30px; height: 30px; font-size: 0.75rem; }
+  .ps-ts-label { font-size: 0.55rem; max-width: 56px; }
+  .ps-ts-connector { margin-top: 15px; }
+}
+
+/* ── Pending offer card (Offer Released, awaiting student decision) ──────── */
+
+.ps-pending-offer-card {
+  background: linear-gradient(135deg, #fffbeb, #fef9c3);
+  border: 2px solid #fde68a;
+  border-radius: 14px;
+  padding: 22px 24px;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.14);
+}
+
+.ps-pending-offer-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.ps-pending-offer-icon { font-size: 2rem; flex-shrink: 0; }
+
+.ps-pending-offer-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #78350f;
+  margin-bottom: 3px;
+}
+
+.ps-pending-offer-sub {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ps-pending-offer-meta {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: #78350f;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.ps-pending-offer-hint {
+  font-size: 0.78rem;
+  color: #92400e;
+  margin: 0;
+}
+
+/* ── Placed banner (replaces the heavy dark card when using swiper) ──────── */
+
+.ps-placed-banner {
+  background: linear-gradient(135deg, #052e16 0%, #14532d 50%, #166534 100%);
+  border-radius: 16px;
+  padding: 32px 36px;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(22, 163, 74, 0.28);
+}
+
+.ps-placed-headline {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+
+.ps-placed-sub {
+  font-size: 0.88rem;
+  opacity: 0.8;
+}
+
+/* ── Swiper wrapper ──────────────────────────────────────────────────────── */
+
+.ps-swiper-wrap { padding-bottom: 4px; }
+
+.ps-swiper { padding-bottom: 36px !important; }
+
+.ps-swipe-hint {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ── Offer cards ─────────────────────────────────────────────────────────── */
+
+.ps-offer-card {
+  border-radius: 16px;
+  padding: 28px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ps-offer-card--current {
+  background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2px solid #93c5fd;
+  box-shadow: 0 6px 24px rgba(37, 99, 235, 0.12);
+}
+
+.ps-offer-card--previous {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+}
+
+.ps-offer-label {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  align-self: flex-start;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ps-offer-label--current {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.ps-offer-label--previous {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.ps-offer-company {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.ps-offer-card--previous .ps-offer-company { color: #475569; }
+
+/* ── Offer detail grid ───────────────────────────────────────────────────── */
+
+.ps-offer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.ps-offer-card--previous .ps-offer-grid {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 420px) {
+  .ps-offer-grid { grid-template-columns: 1fr; }
+}
+
+.ps-offer-item-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+
+.ps-offer-item-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.ps-offer-card--previous .ps-offer-item-value { color: #475569; }
+
+.ps-offer-pkg-current {
+  font-size: 1.15rem;
+  color: #1d4ed8;
+}
+
+.ps-offer-pkg-prev {
+  font-size: 1rem;
+  color: #64748b;
+}
+
+.ps-offer-selected-chip {
+  display: inline-block;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* ── Skeleton ────────────────────────────────────────────────────────────── */
+
+.ps-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8eef4 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: ps-shimmer 1.4s infinite;
+  border-radius: 14px;
+}
+
+@keyframes ps-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

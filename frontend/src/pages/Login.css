@@ -1,0 +1,173 @@
+/* ── Full-page layout ───────────────────────────────────────────────────── */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  padding: 24px;
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────── */
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 40px 36px 32px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo-svg {
+  width: 62px;
+  height: 62px;
+  display: block;
+  margin: 0 auto 12px;
+}
+
+.login-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+}
+
+.login-subtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.login-institute {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #64748b;
+  margin: 5px 0 0;
+  line-height: 1.4;
+}
+
+/* ── Form ───────────────────────────────────────────────────────────────── */
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.login-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.login-input {
+  font-size: 0.9rem;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  outline: none;
+  color: #1e293b;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background: #f8fafc;
+}
+
+.login-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background: #fff;
+}
+
+.login-error {
+  font-size: 0.8rem;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.login-btn {
+  margin-top: 4px;
+  padding: 11px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  letter-spacing: 0.02em;
+}
+
+.login-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.login-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ── Demo accounts ──────────────────────────────────────────────────────── */
+
+.login-demo {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.login-demo-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  margin: 0 0 10px;
+}
+
+.login-demo-accounts {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.demo-chip {
+  font-size: 0.73rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--chip-color, #64748b);
+  color: var(--chip-color, #64748b);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.demo-chip:hover {
+  background: var(--chip-color, #64748b);
+  color: #fff;
+}

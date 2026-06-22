@@ -1,0 +1,21 @@
+.btn.action-edit {
+  background-color: #1e293b !important;
+  color: white !important;
+  border-color: #1e293b !important;
+}
+
+.btn.action-edit:hover {
+  background-color: #334155 !important;
+  border-color: #334155 !important;
+}
+
+.btn.action-delete {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border-color: #dc3545 !important;
+}
+
+.btn.action-delete:hover {
+  background-color: #bb2d3b !important;
+  border-color: #bb2d3b !important;
+}
