@@ -6,28 +6,55 @@
 
 USE placement_records_db;
 
--- ── TRIGGER 1: after_selection ───────────────────────────────
+-- ── TRIGGER 1: after_offer_accepted ──────────────────────────
 -- AFTER UPDATE on Applications
--- When result changes to 'Selected', auto-promote student's
--- placement_tier to match the company's tier for that drive.
+-- Fires when status → 'Offer Accepted' (student explicitly accepted).
+-- Updates Students.placement_tier only if the new tier outranks the current one.
+-- The Java service (StudentPortalServiceImpl.acceptOffer) does the same —
+-- both paths are idempotent and belt-and-suspenders for each other.
 DROP TRIGGER IF EXISTS after_selection;
+DROP TRIGGER IF EXISTS after_offer_accepted;
 DELIMITER $$
-CREATE TRIGGER after_selection
+CREATE TRIGGER after_offer_accepted
 AFTER UPDATE ON Applications
 FOR EACH ROW
 BEGIN
-    DECLARE v_company_tier ENUM('Normal','Dream','Super Dream');
+    DECLARE v_company_tier   VARCHAR(20);
+    DECLARE v_current_tier   VARCHAR(20);
+    DECLARE v_current_rank   INT DEFAULT 0;
+    DECLARE v_new_rank       INT DEFAULT 0;
 
-    IF NEW.result = 'Selected' AND OLD.result <> 'Selected' THEN
-        -- Fetch the tier of the company associated with this drive
+    DECLARE CONTINUE HANDLER FOR NOT FOUND BEGIN END;
+
+    IF NEW.status = 'Offer Accepted' AND OLD.status <> 'Offer Accepted' THEN
         SELECT c.tier INTO v_company_tier
-        FROM Drives d
-        JOIN Companies c ON d.company_id = c.company_id
-        WHERE d.drive_id = NEW.drive_id;
+        FROM   Drives d
+        JOIN   Companies c ON d.company_id = c.company_id
+        WHERE  d.drive_id = NEW.drive_id;
 
-        UPDATE Students
-        SET placement_tier = v_company_tier
-        WHERE student_id = NEW.student_id;
+        SELECT placement_tier INTO v_current_tier
+        FROM   Students WHERE student_id = NEW.student_id;
+
+        -- Map tier names to numeric ranks for comparison
+        SET v_current_rank = CASE v_current_tier
+            WHEN 'Super Dream' THEN 3
+            WHEN 'Dream'       THEN 2
+            WHEN 'Normal'      THEN 1
+            ELSE 0
+        END;
+        SET v_new_rank = CASE v_company_tier
+            WHEN 'Super Dream' THEN 3
+            WHEN 'Dream'       THEN 2
+            WHEN 'Normal'      THEN 1
+            ELSE 0
+        END;
+
+        -- Only upgrade — never downgrade placement_tier
+        IF v_new_rank > v_current_rank THEN
+            UPDATE Students
+            SET    placement_tier = v_company_tier
+            WHERE  student_id = NEW.student_id;
+        END IF;
     END IF;
 END$$
 DELIMITER ;
@@ -35,72 +62,72 @@ DELIMITER ;
 
 -- ── TRIGGER 2: prevent_ineligible_apply ──────────────────────
 -- BEFORE INSERT on Applications
+-- Students.placement_tier = Actual Placement Status (set by after_selection).
+-- Academic eligibility (CGPA tier) is computed at runtime and is NOT stored.
 -- Rejects if:
---   (a) Student is already placed at same or higher tier, OR
---   (b) Student does not meet CGPA/backlog criteria in DriveEligibility
+--   (a) Placement tier blocks this company's tier, OR
+--   (b) Student does not meet CGPA/backlog criteria in EligibilityCriteria
 DROP TRIGGER IF EXISTS prevent_ineligible_apply;
 DELIMITER $$
 CREATE TRIGGER prevent_ineligible_apply
 BEFORE INSERT ON Applications
 FOR EACH ROW
 BEGIN
-    DECLARE v_student_tier  ENUM('Unplaced','Normal','Dream','Super Dream');
-    DECLARE v_company_tier  ENUM('Normal','Dream','Super Dream');
+    DECLARE v_student_tier  VARCHAR(20);
+    DECLARE v_company_tier  VARCHAR(20) DEFAULT NULL;
     DECLARE v_student_cgpa  DECIMAL(4,2);
     DECLARE v_backlogs      INT;
-    DECLARE v_min_cgpa      DECIMAL(4,2);
-    DECLARE v_max_backlogs  INT;
+    DECLARE v_min_cgpa      DECIMAL(4,2) DEFAULT NULL;
+    DECLARE v_max_backlogs  INT          DEFAULT NULL;
     DECLARE v_dept_id       INT;
+    DECLARE v_cgpa_msg      VARCHAR(200) DEFAULT NULL;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND BEGIN END;
 
     IF IFNULL(@DISABLE_TRIGGERS, 0) = 0 THEN
-        -- Fetch student attributes
         SELECT placement_tier, cgpa, active_backlogs, dept_id
-        INTO v_student_tier, v_student_cgpa, v_backlogs, v_dept_id
-        FROM Students WHERE student_id = NEW.student_id;
+        INTO   v_student_tier, v_student_cgpa, v_backlogs, v_dept_id
+        FROM   Students WHERE student_id = NEW.student_id;
 
-        -- Fetch company tier for this drive
         SELECT c.tier INTO v_company_tier
-        FROM Drives d
-        JOIN Companies c ON d.company_id = c.company_id
-        WHERE d.drive_id = NEW.drive_id;
+        FROM   Drives d
+        JOIN   Companies c ON d.company_id = c.company_id
+        WHERE  d.drive_id = NEW.drive_id;
 
-        -- Rule (a): Tier-based placement policy
-        -- Unplaced  → can apply anywhere
-        -- Normal    → can apply Dream / Super Dream only
-        -- Dream     → can apply Super Dream only
-        -- Super Dream → cannot apply anywhere
+        -- Rule (a): Tier-based restrictions using actual placement status
+        -- Unplaced     → may apply to Normal / Dream / Super Dream
+        -- Normal placed → may apply to Dream / Super Dream only
+        -- Dream placed  → may apply to Super Dream only
+        -- Super Dream placed → may not apply anywhere
         IF v_student_tier = 'Super Dream' THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'INELIGIBLE: Student already placed at Super Dream tier.';
         END IF;
 
-        IF v_student_tier = 'Dream' AND v_company_tier = 'Normal' THEN
+        IF v_student_tier = 'Dream' AND v_company_tier IN ('Normal', 'Dream') THEN
             SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'INELIGIBLE: Dream-placed student cannot apply to Normal tier drives.';
-        END IF;
-
-        IF v_student_tier = 'Dream' AND v_company_tier = 'Dream' THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'INELIGIBLE: Dream-placed student cannot reapply to Dream tier drives.';
+                SET MESSAGE_TEXT = 'INELIGIBLE: Dream-placed students can only apply to Super Dream companies.';
         END IF;
 
         IF v_student_tier = 'Normal' AND v_company_tier = 'Normal' THEN
             SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'INELIGIBLE: Normal-placed student cannot apply to Normal tier drives.';
+                SET MESSAGE_TEXT = 'INELIGIBLE: Normal-placed students cannot apply to Normal tier drives.';
         END IF;
 
-        -- Rule (b): CGPA and backlog eligibility
+        -- Rule (b): CGPA and backlog eligibility from EligibilityCriteria
         SELECT min_cgpa, max_backlogs
-        INTO v_min_cgpa, v_max_backlogs
-        FROM DriveEligibility
-        WHERE drive_id = NEW.drive_id AND dept_id = v_dept_id;
+        INTO   v_min_cgpa, v_max_backlogs
+        FROM   EligibilityCriteria
+        WHERE  drive_id = NEW.drive_id
+          AND  dept_id  = v_dept_id
+        LIMIT 1;
 
-        IF v_student_cgpa < v_min_cgpa THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'INELIGIBLE: Student CGPA does not meet the minimum requirement for this drive.';
+        IF v_min_cgpa IS NOT NULL AND v_student_cgpa < v_min_cgpa THEN
+            SET v_cgpa_msg = CONCAT('INELIGIBLE: Minimum CGPA required is ', v_min_cgpa, '.');
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_cgpa_msg;
         END IF;
 
-        IF v_backlogs > v_max_backlogs THEN
+        IF v_max_backlogs IS NOT NULL AND v_backlogs > v_max_backlogs THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'INELIGIBLE: Student has too many active backlogs for this drive.';
         END IF;
