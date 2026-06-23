@@ -1,0 +1,220 @@
+.mp-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 0 32px;
+}
+
+/* ── Header card ─────────────────────────────────────────────────────────── */
+
+.mp-header-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 22px 26px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.mp-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.mp-header-body { flex: 1; min-width: 0; }
+
+.mp-full-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+
+.mp-sub-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.mp-chip {
+  font-size: 0.71rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  color: #475569;
+}
+
+.mp-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mp-tier-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.mp-status-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+}
+
+.mp-status-placed  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.mp-status-pending { background: #fefce8; color: #a16207; border: 1px solid #fde68a; }
+
+/* ── Details grid ────────────────────────────────────────────────────────── */
+
+.mp-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .mp-details-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Individual detail card ──────────────────────────────────────────────── */
+
+.mp-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+
+.mp-card--full {
+  grid-column: 1 / -1;
+}
+
+.mp-card-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* ── Fields ──────────────────────────────────────────────────────────────── */
+
+.mp-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mp-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.mp-field-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 130px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.mp-field-value {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.mp-field-highlight {
+  color: #1e293b;
+  font-size: 0.9rem;
+}
+
+/* ── Placement row ───────────────────────────────────────────────────────── */
+
+.mp-placement-row {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.mp-placement-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mp-pl-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mp-pl-value { display: flex; align-items: center; }
+
+/* ── Eligibility chips ───────────────────────────────────────────────────── */
+
+.mp-elig-chip {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.mp-elig-super  { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+.mp-elig-dream  { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.mp-elig-normal { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.mp-elig-block  { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+/* ── Read-only note ──────────────────────────────────────────────────────── */
+
+.mp-readonly-note {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  padding: 9px 14px;
+}
+
+/* ── Skeleton ────────────────────────────────────────────────────────────── */
+
+.mp-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8eef4 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: mp-shimmer 1.4s infinite;
+  border-radius: 10px;
+}
+
+@keyframes mp-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

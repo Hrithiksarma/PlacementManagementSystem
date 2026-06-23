@@ -1,0 +1,157 @@
+.btn.action-edit {
+  background-color: #1e293b !important;
+  color: white !important;
+  border-color: #1e293b !important;
+}
+
+.btn.action-edit:hover {
+  background-color: #334155 !important;
+  border-color: #334155 !important;
+}
+
+.btn.action-delete {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border-color: #dc3545 !important;
+}
+
+.btn.action-delete:hover {
+  background-color: #bb2d3b !important;
+  border-color: #bb2d3b !important;
+}
+
+/* Drive Info Card */
+.drive-info-card {
+  background-color: #f8fafc;
+  border-color: #e2e8f0 !important;
+}
+
+.drive-info-header {
+  background-color: #f1f5f9;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+.info-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.info-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Eligibility Card */
+.eligibility-card {
+  border-radius: 8px;
+  border: 1px solid;
+  overflow: hidden;
+}
+
+.eligibility-card.eligible {
+  background-color: #f8fffe;
+  border-color: #bbf7d0;
+}
+
+.eligibility-card.ineligible {
+  background-color: #fff8f8;
+  border-color: #fecaca;
+}
+
+.elig-sections {
+  display: flex;
+  gap: 0;
+}
+
+.elig-section {
+  flex: 1;
+  padding: 10px 14px;
+}
+
+.elig-section-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.elig-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.elig-label {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.elig-value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.elig-divider {
+  width: 1px;
+  background-color: #e2e8f0;
+  margin: 8px 0;
+}
+
+.elig-result {
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-top: 1px solid;
+}
+
+.elig-result-pass {
+  background-color: #dcfce7;
+  border-top-color: #bbf7d0;
+  color: #15803d;
+}
+
+.elig-result-fail {
+  background-color: #fee2e2;
+  border-top-color: #fecaca;
+  color: #b91c1c;
+}
+
+/* Placement Tier Badges */
+.tier-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.tier-super-dream {
+  background-color: #7c3aed;
+  color: #ffffff;
+}
+
+.tier-dream {
+  background-color: #16a34a;
+  color: #ffffff;
+}
+
+.tier-normal {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.tier-unplaced {
+  background-color: #374151;
+  color: #ffffff;
+}
