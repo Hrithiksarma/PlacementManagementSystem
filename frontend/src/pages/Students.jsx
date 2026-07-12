@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Layout from "../components/Layout";
 import {
-  addStudent,
-  updateStudent,
   deleteStudent,
   getFilteredStudents,
+  previewStudent,
+  importStudent,
+  backfillStudentAccounts,
 } from "../services/studentService";
-import { getDepartments } from "../services/departmentService";
 import { isAdmin } from "../services/authService";
 import "./Students.css";
 
@@ -17,42 +17,28 @@ const DEPT_BY_PROGRAM = {
   "M.Tech": ["CSE", "ECE"],
   "PhD":    ["CSE", "ECE", "Science & Mathematics", "HSS"],
 };
-const PLACEMENT_TIERS = ["Normal", "Dream", "Super Dream"];
-
 const BATCH_YEARS = [];
 for (let y = 2015; y <= 2030; y++) BATCH_YEARS.push(y);
 
-const emptyForm = {
-  name: "",
-  deptId: "",
-  batchYear: 2025,
-  cgpa: "",
-  activeBacklogs: "",
-  phone: "",
-  email: "",
-  placementTier: "Normal",
-};
-
 function Students() {
-  const [departments, setDepartments] = useState([]);
   const [students, setStudents] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(emptyForm);
   const [filters, setFilters] = useState({
     department: "CSE",
     program: "B.Tech",
     batchYear: 2025,
   });
+  const [showImport, setShowImport]       = useState(false);
+  const [importRollNo, setImportRollNo]   = useState("");
+  const [importPreview, setImportPreview] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importError, setImportError]     = useState(null);
+
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillResult, setBackfillResult]   = useState(null);
+  const [backfillError, setBackfillError]     = useState(null);
 
   const admin = isAdmin();
-
-  useEffect(() => {
-    getDepartments()
-      .then((res) => setDepartments(res.data))
-      .catch((err) => console.error("Error loading departments:", err));
-  }, []);
 
   const handleSearch = async () => {
     try {
@@ -68,50 +54,6 @@ function Students() {
     }
   };
 
-  const buildPayload = () => ({
-    name: form.name,
-    department: form.deptId ? { deptId: parseInt(form.deptId) } : null,
-    batchYear: parseInt(form.batchYear),
-    cgpa: parseFloat(form.cgpa),
-    activeBacklogs: parseInt(form.activeBacklogs),
-    phone: form.phone,
-    email: form.email,
-    placementTier: form.placementTier,
-  });
-
-  const handleSaveStudent = async () => {
-    try {
-      if (editingId) {
-        await updateStudent(editingId, buildPayload());
-        alert("Student Updated Successfully");
-      } else {
-        await addStudent(buildPayload());
-        alert("Student Added Successfully");
-      }
-      if (hasSearched) handleSearch();
-      setShowForm(false);
-      setEditingId(null);
-      setForm(emptyForm);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleEdit = (student) => {
-    setForm({
-      name: student.name,
-      deptId: student.department?.deptId ?? "",
-      batchYear: student.batchYear,
-      cgpa: student.cgpa,
-      activeBacklogs: student.activeBacklogs,
-      phone: student.phone,
-      email: student.email,
-      placementTier: student.placementTier ?? "Normal",
-    });
-    setEditingId(student.studentId);
-    setShowForm(true);
-  };
-
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this student?")) return;
     try {
@@ -124,36 +66,224 @@ function Students() {
     }
   };
 
-  const field = (key) => ({
-    value: form[key],
-    onChange: (e) => setForm({ ...form, [key]: e.target.value }),
-  });
+  const handlePreview = async () => {
+    if (!importRollNo.trim()) return;
+    setImportLoading(true);
+    setImportError(null);
+    setImportPreview(null);
+    try {
+      const res = await previewStudent(importRollNo.trim());
+      setImportPreview(res.data);
+    } catch (err) {
+      setImportError(
+        err.response?.data?.message ?? "Roll number not found in Academic ERP."
+      );
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleBackfill = async () => {
+    setBackfillLoading(true);
+    setBackfillError(null);
+    setBackfillResult(null);
+    try {
+      const res = await backfillStudentAccounts();
+      setBackfillResult(res.data);
+    } catch (err) {
+      setBackfillError(
+        err.response?.data?.message ?? "Failed to create missing login accounts."
+      );
+    } finally {
+      setBackfillLoading(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importPreview) return;
+    setImportLoading(true);
+    setImportError(null);
+    try {
+      await importStudent(importRollNo.trim());
+      alert(`Student ${importPreview.firstName} ${importPreview.lastName} imported successfully.`);
+      setShowImport(false);
+      setImportRollNo("");
+      setImportPreview(null);
+      if (hasSearched) handleSearch();
+    } catch (err) {
+      setImportError(
+        err.response?.data?.message ?? "Import failed. Student may already exist in PRMS."
+      );
+    } finally {
+      setImportLoading(false);
+    }
+  };
 
   return (
     <Layout>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div className="d-flex align-items-center gap-2">
+      {admin && (
+        <div className="d-flex justify-content-between align-items-center mb-3">
           <h2 className="mb-0">Students</h2>
-          {!admin && (
-            <span className="badge bg-info text-white" style={{ fontSize: "0.7rem" }}>
-              View Only
+          <div className="d-flex gap-2 align-items-center">
+            <span
+              className="text-muted d-flex align-items-center gap-1"
+              style={{ fontSize: "0.82rem" }}
+            >
+              🎓 New students are registered in Academic ERP
             </span>
+            <a
+              href="http://localhost:5174"
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-outline-secondary btn-sm"
+            >
+              Open Academic ERP ↗
+            </a>
+            <button
+              className="btn btn-outline-secondary btn-sm"
+              onClick={handleBackfill}
+              disabled={backfillLoading}
+              title="Create login accounts (username & temp password = roll number) for any student that doesn't have one yet"
+            >
+              {backfillLoading ? "Creating logins…" : "Create Missing Logins"}
+            </button>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setShowImport(!showImport);
+                setImportRollNo("");
+                setImportPreview(null);
+                setImportError(null);
+              }}
+            >
+              {showImport ? "Cancel Import" : "Import Student"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {admin && backfillError && (
+        <div className="alert alert-danger py-2">{backfillError}</div>
+      )}
+
+      {admin && backfillResult && (
+        <div className="alert alert-success py-2">
+          Created <strong>{backfillResult.created}</strong> new login account(s)
+          {backfillResult.skipped > 0 && <> — {backfillResult.skipped} student(s) already had one</>}.
+          {backfillResult.created > 0 && (
+            <>
+              {" "}Username and temporary password = student's roll number
+              {backfillResult.createdRollNumbers?.length > 0 && (
+                <> ({backfillResult.createdRollNumbers.join(", ")})</>
+              )}.
+              Students will be prompted to set a new password on first login.
+            </>
           )}
         </div>
-        {admin && (
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setShowForm(!showForm);
-              if (showForm) { setEditingId(null); setForm(emptyForm); }
-            }}
-          >
-            {showForm ? "Cancel" : "Add Student"}
-          </button>
-        )}
-      </div>
+      )}
 
-      {/* Filter Panel */}
+      {admin && showImport && (
+        <div className="card mb-4 border-primary">
+          <div className="card-header bg-primary text-white fw-semibold">
+            Import Student from Academic ERP
+          </div>
+          <div className="card-body">
+
+            {/* Roll number input */}
+            <div className="d-flex gap-2 align-items-end mb-3">
+              <div style={{ flex: 1 }}>
+                <label className="form-label fw-semibold">Roll Number</label>
+                <input
+                  className="form-control"
+                  placeholder="e.g. 2511104"
+                  value={importRollNo}
+                  onChange={(e) => {
+                    setImportRollNo(e.target.value);
+                    setImportPreview(null);
+                    setImportError(null);
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handlePreview()}
+                  maxLength={7}
+                />
+              </div>
+              <button
+                className="btn btn-outline-primary"
+                onClick={handlePreview}
+                disabled={importLoading || !importRollNo.trim()}
+              >
+                {importLoading && !importPreview ? "Searching…" : "Look Up"}
+              </button>
+            </div>
+
+            {/* Error */}
+            {importError && (
+              <div className="alert alert-danger py-2">{importError}</div>
+            )}
+
+            {/* Preview card */}
+            {importPreview && (
+              <div className="card bg-light mb-3">
+                <div className="card-body">
+                  <h6 className="card-title mb-3">
+                    {importPreview.firstName}{" "}
+                    {importPreview.middleName ? importPreview.middleName + " " : ""}
+                    {importPreview.lastName}
+                  </h6>
+                  <div className="row g-2" style={{ fontSize: "0.88rem" }}>
+                    <div className="col-md-4">
+                      <span className="text-muted">Roll No</span>
+                      <div className="fw-semibold" style={{ fontFamily: "monospace" }}>
+                        {importPreview.rollNo}
+                      </div>
+                    </div>
+                    <div className="col-md-4">
+                      <span className="text-muted">Email</span>
+                      <div>{importPreview.email}</div>
+                    </div>
+                    <div className="col-md-4">
+                      <span className="text-muted">Phone</span>
+                      <div>{importPreview.phone}</div>
+                    </div>
+                    <div className="col-md-4">
+                      <span className="text-muted">Department</span>
+                      <div>{importPreview.department?.deptName ?? "—"}</div>
+                    </div>
+                    <div className="col-md-4">
+                      <span className="text-muted">Program</span>
+                      <div>{importPreview.department?.program} · {importPreview.department?.branch}</div>
+                    </div>
+                    <div className="col-md-4">
+                      <span className="text-muted">Admission Year</span>
+                      <div>{importPreview.admissionYear}</div>
+                    </div>
+                    <div className="col-md-4">
+                      <span className="text-muted">CGPA</span>
+                      <div>{importPreview.cgpa}</div>
+                    </div>
+                    <div className="col-md-4">
+                      <span className="text-muted">Backlogs</span>
+                      <div>{importPreview.activeBacklogs}</div>
+                    </div>
+                    <div className="col-md-4">
+                      <span className="text-muted">Placement tier</span>
+                      <div className="text-muted fst-italic">Unplaced (set after import)</div>
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-success mt-3"
+                    onClick={handleImport}
+                    disabled={importLoading}
+                  >
+                    {importLoading ? "Importing…" : "Confirm Import"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Filter Panel — unchanged */}
       <div className="card mb-4">
         <div className="card-body">
           <div className="row g-3 align-items-end">
@@ -209,66 +339,6 @@ function Students() {
         </div>
       </div>
 
-      {/* Add / Edit Form — Admin only */}
-      {admin && showForm && (
-        <div className="card mb-4">
-          <div className="card-body">
-            <div className="row g-2">
-              <div className="col-md-6">
-                <label className="form-label">Name</label>
-                <input className="form-control" placeholder="Full name" {...field("name")} />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Department</label>
-                <select className="form-select" {...field("deptId")}>
-                  <option value="">Select department</option>
-                  {departments.map((d) => (
-                    <option key={d.deptId} value={d.deptId}>
-                      {d.deptName} – {d.program}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Batch Year</label>
-                <select className="form-select" {...field("batchYear")}>
-                  {BATCH_YEARS.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Placement Tier</label>
-                <select className="form-select" {...field("placementTier")}>
-                  {PLACEMENT_TIERS.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">CGPA</label>
-                <input className="form-control" placeholder="0.00 – 10.00" type="number" step="0.01" min="0" max="10" {...field("cgpa")} />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Active Backlogs</label>
-                <input className="form-control" placeholder="0" type="number" min="0" {...field("activeBacklogs")} />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Phone</label>
-                <input className="form-control" placeholder="10-digit number" {...field("phone")} />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Email</label>
-                <input className="form-control" placeholder="student@email.com" type="email" {...field("email")} />
-              </div>
-            </div>
-            <button className="btn btn-success mt-3" onClick={handleSaveStudent}>
-              {editingId ? "Update Student" : "Save Student"}
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Results Table */}
       {hasSearched && (
         <>
@@ -281,6 +351,7 @@ function Students() {
               <tr>
                 <th>ID</th>
                 <th>Name</th>
+                <th>Roll No</th>
                 <th>Department</th>
                 <th>Batch</th>
                 <th>CGPA</th>
@@ -294,7 +365,7 @@ function Students() {
             <tbody>
               {students.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="text-center text-muted py-3">
+                  <td colSpan="11" className="text-center text-muted py-3">
                     No students found for the selected filters.
                   </td>
                 </tr>
@@ -302,7 +373,13 @@ function Students() {
                 students.map((student) => (
                   <tr key={student.studentId}>
                     <td>{student.studentId}</td>
+                    
                     <td>{student.name}</td>
+                     <td>
+                     <span style={{ fontFamily: "monospace", fontWeight: 400, letterSpacing: "0.04em" }}>
+                      {student.rollNo ?? "—"}
+                       </span>
+                      </td>
                     <td>{student.department?.deptName ?? "—"}</td>
                     <td>{student.batchYear}</td>
                     <td>{student.cgpa}</td>
@@ -312,20 +389,12 @@ function Students() {
                     <td>{student.placementTier}</td>
                     <td>
                       {admin ? (
-                        <>
-                          <button
-                            className="btn btn-sm action-edit me-2"
-                            onClick={() => handleEdit(student)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn-sm action-delete"
-                            onClick={() => handleDelete(student.studentId)}
-                          >
-                            Delete
-                          </button>
-                        </>
+                        <button
+                          className="btn btn-sm action-delete"
+                          onClick={() => handleDelete(student.studentId)}
+                        >
+                          Delete
+                        </button>
                       ) : (
                         <span className="text-muted" style={{ fontSize: "0.78rem" }}>
                           View Only

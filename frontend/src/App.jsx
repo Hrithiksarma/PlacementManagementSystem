@@ -8,8 +8,10 @@ import Companies    from "./pages/Companies";
 import Students     from "./pages/Students";
 import Drives       from "./pages/Drives";
 import Applications from "./pages/Applications";
-import Login        from "./pages/Login";
-import AccessDenied from "./pages/AccessDenied";
+import Login          from "./pages/Login";
+import AccessDenied   from "./pages/AccessDenied";
+import ChangePassword from "./pages/ChangePassword";
+import ManageOfficers from "./pages/ManageOfficers";
 
 import StudentDashboard from "./pages/student/StudentDashboard";
 import MyProfile        from "./pages/student/MyProfile";
@@ -17,9 +19,10 @@ import EligibleDrives   from "./pages/student/EligibleDrives";
 import MyApplications   from "./pages/student/MyApplications";
 import PlacementStatus  from "./pages/student/PlacementStatus";
 
-import StudentRoute from "./routes/StudentRoute";
-import AdminRoute   from "./routes/AdminRoute";
-import RoleRedirect from "./routes/RoleRedirect";
+import StudentRoute    from "./routes/StudentRoute";
+import AdminRoute      from "./routes/AdminRoute";
+import SuperAdminRoute from "./routes/SuperAdminRoute";
+import RoleRedirect    from "./routes/RoleRedirect";
 
 function App() {
   return (
@@ -34,6 +37,9 @@ function App() {
         <Route path="/" element={<RoleRedirect />} />
 
         {/* ── Student portal ───────────────────────────────────────── */}
+        <Route path="/student/change-password" element={
+          <StudentRoute><ChangePassword /></StudentRoute>
+        } />
         <Route path="/student/dashboard" element={
           <StudentRoute><StudentDashboard /></StudentRoute>
         } />
@@ -51,6 +57,9 @@ function App() {
         } />
 
         {/* ── Admin / Placement Officer ────────────────────────────── */}
+        <Route path="/admin/change-password" element={
+          <AdminRoute><ChangePassword /></AdminRoute>
+        } />
         <Route path="/admin/dashboard" element={
           <AdminRoute><Dashboard /></AdminRoute>
         } />
@@ -65,6 +74,9 @@ function App() {
         } />
         <Route path="/admin/applications" element={
           <AdminRoute><Applications /></AdminRoute>
+        } />
+        <Route path="/admin/officers" element={
+          <SuperAdminRoute><ManageOfficers /></SuperAdminRoute>
         } />
 
         {/* ── Catch-all ────────────────────────────────────────────── */}

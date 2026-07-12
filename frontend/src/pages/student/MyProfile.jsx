@@ -60,8 +60,13 @@ function MyProfile() {
           <div className="mp-header-body">
             <div className="mp-full-name">{profile?.name}</div>
             <div className="mp-sub-row">
-              {profile?.branch  && <span className="mp-chip">{profile.branch}</span>}
-              {profile?.program && <span className="mp-chip">{profile.program}</span>}
+              {profile?.rollNo && (
+                <span className="mp-chip" style={{ fontFamily: "monospace", letterSpacing: "0.06em", fontWeight: 600 }}>
+                  {profile.rollNo}
+                </span>
+              )}
+              {profile?.branch   && <span className="mp-chip">{profile.branch}</span>}
+              {profile?.program  && <span className="mp-chip">{profile.program}</span>}
               {profile?.batchYear && <span className="mp-chip">Batch {profile.batchYear}</span>}
             </div>
           </div>
@@ -80,6 +85,7 @@ function MyProfile() {
           <div className="mp-card">
             <div className="mp-card-title">📋 Personal Information</div>
             <div className="mp-fields">
+              <Field label="Roll Number"   value={profile?.rollNo} />
               <Field label="Student ID"    value={`#${profile?.studentId}`} />
               <Field label="Full Name"     value={profile?.name} />
               <Field label="Email Address" value={profile?.email} />

@@ -33,6 +33,17 @@ public class User {
     @Column(name = "student_id")
     private Integer studentId;
 
+    // True until the user changes their (auto-generated) password for the first time.
+    // columnDefinition ensures existing rows get backfilled to TRUE on schema update,
+    // rather than NULL, which would blow up reading a primitive boolean.
+    @Column(name = "must_change_password", nullable = false, columnDefinition = "boolean default true")
+    private boolean mustChangePassword = true;
+
+    // Soft-disable switch for admin-managed accounts (e.g. placement officers).
+    // A disabled account can never authenticate, even with a valid password.
+    @Column(name = "enabled", nullable = false, columnDefinition = "boolean default true")
+    private boolean enabled = true;
+
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
@@ -50,4 +61,10 @@ public class User {
 
     public Integer getStudentId() { return studentId; }
     public void setStudentId(Integer studentId) { this.studentId = studentId; }
+
+    public boolean isMustChangePassword() { return mustChangePassword; }
+    public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
+
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 }

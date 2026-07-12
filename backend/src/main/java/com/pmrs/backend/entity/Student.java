@@ -12,6 +12,11 @@ public class Student {
     @Column(name = "student_id")
     private Integer studentId;
 
+    // Roll number is assigned by LocalRollNumberService before save.
+    // JPA writes and reads this column normally — no trigger involved.
+    @Column(name = "roll_no", unique = true, length = 7, nullable = false)
+    private String rollNo;
+
     @NotBlank(message = "Name is required")
     @Column(name = "name")
     private String name;
@@ -51,6 +56,14 @@ public class Student {
 
     public void setStudentId(Integer studentId) {
         this.studentId = studentId;
+    }
+
+    public String getRollNo() {
+        return rollNo;
+    }
+
+    public void setRollNo(String rollNo) {
+        this.rollNo = rollNo;
     }
 
     public String getName() {

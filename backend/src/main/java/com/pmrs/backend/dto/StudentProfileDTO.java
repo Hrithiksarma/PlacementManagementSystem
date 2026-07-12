@@ -3,6 +3,7 @@ package com.pmrs.backend.dto;
 public class StudentProfileDTO {
 
     private Integer studentId;
+    private String  rollNo;
     private String  name;
     private String  email;
     private String  phone;
@@ -16,11 +17,12 @@ public class StudentProfileDTO {
 
     public StudentProfileDTO() {}
 
-    public StudentProfileDTO(Integer studentId, String name, String email, String phone,
+    public StudentProfileDTO(Integer studentId, String rollNo, String name, String email, String phone,
                              String branch, String program, Integer batchYear,
                              Double cgpa, Integer activeBacklogs,
                              String placementTier, String placementStatus) {
         this.studentId       = studentId;
+        this.rollNo          = rollNo;
         this.name            = name;
         this.email           = email;
         this.phone           = phone;
@@ -35,6 +37,9 @@ public class StudentProfileDTO {
 
     public Integer getStudentId()       { return studentId; }
     public void    setStudentId(Integer v) { this.studentId = v; }
+
+    public String  getRollNo()          { return rollNo; }
+    public void    setRollNo(String v)  { this.rollNo = v; }
 
     public String  getName()            { return name; }
     public void    setName(String v)    { this.name = v; }

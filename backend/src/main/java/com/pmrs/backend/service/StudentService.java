@@ -1,5 +1,6 @@
 package com.pmrs.backend.service;
 
+import com.pmrs.backend.dto.BackfillResultDTO;
 import com.pmrs.backend.entity.Student;
 
 import java.util.List;
@@ -19,4 +20,8 @@ public interface StudentService {
     List<Student> getStudentsByCgpa(Double cgpa);
 
     List<Student> getFilteredStudents(String branch, String program, Integer batchYear);
+
+    Student importStudent(String rollNo);
+
+    BackfillResultDTO backfillStudentAccounts();
 }

@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../../../.."
+		},
+		{
+			"path": "../../../../../../../../../files"
+		},
+		{
+			"path": "../../../../../../../../../academic-service"
+		},
+		{
+			"path": "../../../../../../../../../file_new"
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "interactive"
+	}
+}

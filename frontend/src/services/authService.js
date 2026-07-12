@@ -11,12 +11,13 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
-// ── Redirect to /login on 401 ─────────────────────────────────────────────────
+// ── Redirect to /login on 401, or to the forced password-change page on 403 ───
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
+    const path = window.location.pathname;
+
     if (error.response?.status === 401) {
-      const path = window.location.pathname;
       if (path !== "/login") {
         localStorage.removeItem("token");
         localStorage.removeItem("role");
@@ -24,12 +25,33 @@ axios.interceptors.response.use(
         window.location.href = "/login";
       }
     }
+
+    if (error.response?.status === 403 && error.response?.data?.error === "PASSWORD_CHANGE_REQUIRED") {
+      const role = localStorage.getItem("role");
+      const changePasswordPath = role === "STUDENT" ? "/student/change-password" : "/admin/change-password";
+      if (path !== changePasswordPath) {
+        window.location.href = changePasswordPath;
+      }
+    }
+
+    if (error.response?.status === 403 && error.response?.data?.error === "ACCOUNT_DISABLED") {
+      if (path !== "/login") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("username");
+        window.location.href = "/login";
+      }
+    }
+
     return Promise.reject(error);
   }
 );
 
 export const login = (username, password) =>
   axios.post(`${AUTH_URL}/login`, { username, password });
+
+export const changePassword = (currentPassword, newPassword) =>
+  axios.post(`${AUTH_URL}/change-password`, { currentPassword, newPassword });
 
 export const logout = () => {
   localStorage.removeItem("token");

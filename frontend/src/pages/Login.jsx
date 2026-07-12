@@ -56,9 +56,9 @@ function Login() {
 
       const role = res.data.role;
       if (role === "STUDENT") {
-        navigate("/student/dashboard", { replace: true });
+        navigate(res.data.mustChangePassword ? "/student/change-password" : "/student/dashboard", { replace: true });
       } else if (["ADMIN", "PLACEMENT_OFFICER"].includes(role)) {
-        navigate("/admin/dashboard", { replace: true });
+        navigate(res.data.mustChangePassword ? "/admin/change-password" : "/admin/dashboard", { replace: true });
       } else {
         navigate("/login");
       }

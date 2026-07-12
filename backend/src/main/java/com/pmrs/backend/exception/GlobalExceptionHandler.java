@@ -106,11 +106,18 @@ public class GlobalExceptionHandler {
                 "Transaction failed: " + (msg != null ? msg : "unknown reason"));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArg(IllegalArgumentException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     // ── Catch-all ─────────────────────────────────────────────────────────────
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+        ex.printStackTrace();
+        return error(HttpStatus.INTERNAL_SERVER_ERROR,
+            ex.getClass().getSimpleName() + ": " + ex.getMessage());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

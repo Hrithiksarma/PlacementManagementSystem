@@ -168,6 +168,7 @@ public class StudentPortalServiceImpl implements StudentPortalService {
 
         StudentProfileDTO dto = new StudentProfileDTO();
         dto.setStudentId(s.getStudentId());
+        dto.setRollNo(s.getRollNo());
         dto.setName(s.getName());
         dto.setEmail(s.getEmail());
         dto.setPhone(s.getPhone());

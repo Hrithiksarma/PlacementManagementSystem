@@ -74,6 +74,9 @@ public class SecurityConfig {
                 // ── Student portal: STUDENT role only ─────────────────────
                 .requestMatchers("/api/student/**").hasRole("STUDENT")
 
+                // ── Admin-only: officer account management, never PLACEMENT_OFFICER ──
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+
                 // ── Supporting data ────────────────────────────────────────
                 .requestMatchers("/departments/**", "/hrcontacts/**",
                                  "/eligibilitycriteria/**")
