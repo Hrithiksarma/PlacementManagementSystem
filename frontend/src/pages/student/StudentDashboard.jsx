@@ -10,11 +10,13 @@ import {
 import "./StudentDashboard.css";
 
 const PLACEMENT_COLOR = {
-  "Super Dream": "#7c3aed",
-  "Dream":       "#16a34a",
-  "Normal":      "#2563eb",
-  "Unplaced":    "#475569",
+  C:           "#7c3aed",
+  B:           "#16a34a",
+  A:           "#2563eb",
+  "Unplaced":  "#475569",
 };
+
+const TIER_LABEL = { A: "Tier A", B: "Tier B", C: "Tier C" };
 
 
 function StatCard({ icon, label, value, accent, to }) {
@@ -31,7 +33,7 @@ function StatCard({ icon, label, value, accent, to }) {
 function AppStatusPill({ status }) {
   const COLOR = {
     Applied:               "#2563eb",
-    Shortlisted:           "#7c3aed",
+    "First Round":         "#7c3aed",
     "Interview Scheduled": "#d97706",
     Selected:              "#16a34a",
     Rejected:              "#dc2626",
@@ -101,7 +103,7 @@ function StudentDashboard() {
 
   // Only count drives the student is genuinely eligible for
   const eligibleCount    = eligible.filter((d) => d.eligible !== false).length;
-  const shortlistedCount = apps.filter((a) => a.status === "Shortlisted").length;
+  const firstRoundCount  = apps.filter((a) => a.status === "First Round").length;
   const interviewCount   = apps.filter((a) => a.status === "Interview Scheduled").length;
   const offersCount      = apps.filter((a) => a.status === "Selected").length;
 
@@ -136,9 +138,9 @@ function StudentDashboard() {
           <div className="sd-welcome-right">
             {(() => {
               const placed = profile?.placementTier && profile.placementTier !== "Unplaced";
-              const hasPending = !placed && apps.some((a) => a.status === "Offer Released");
+              const hasPending = !placed && apps.some((a) => a.status === "Selected");
               const label  = placed
-                ? `Placed (${profile.placementTier})`
+                ? `Placed (${TIER_LABEL[profile.placementTier] ?? profile.placementTier})`
                 : hasPending ? "📩 Offer Pending"
                 : "Not Placed";
               const bg = placed
@@ -169,8 +171,8 @@ function StudentDashboard() {
             to="/student/applications"
           />
           <StatCard
-            icon="⭐" label="Shortlisted"
-            value={shortlistedCount}
+            icon="⭐" label="First Round"
+            value={firstRoundCount}
             accent="#d97706"
             to="/student/applications"
           />

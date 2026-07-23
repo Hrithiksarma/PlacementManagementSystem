@@ -14,7 +14,7 @@ public class PlacementStatusDTO {
     private LocalDate  placementDate;
     private String     message;
 
-    // Pending offer: an "Offer Released" app awaiting student decision
+    // Pending offer: a "Selected" app awaiting the student's Accept/Reject decision
     private boolean    hasPendingOffer;
     private Integer    pendingOfferAppId;
     private String     pendingOfferCompany;

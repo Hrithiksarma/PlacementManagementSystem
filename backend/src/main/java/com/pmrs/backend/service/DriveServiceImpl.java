@@ -11,9 +11,11 @@ import java.util.List;
 public class DriveServiceImpl implements DriveService {
 
     private final DriveRepository driveRepository;
+    private final PenaltyService  penaltyService;
 
-    public DriveServiceImpl(DriveRepository driveRepository) {
+    public DriveServiceImpl(DriveRepository driveRepository, PenaltyService penaltyService) {
         this.driveRepository = driveRepository;
+        this.penaltyService  = penaltyService;
     }
 
     @Override
@@ -29,9 +31,15 @@ public class DriveServiceImpl implements DriveService {
 
     @Override
     public Drive saveDrive(Drive drive) {
+        boolean isNew = drive.getDriveId() == null;
         Drive saved = driveRepository.save(drive);
-        return driveRepository.findById(saved.getDriveId())
+        Drive reloaded = driveRepository.findById(saved.getDriveId())
                 .orElseThrow(() -> new ResourceNotFoundException("Drive not found"));
+        if (isNew) {
+            // A newly opened drive consumes one unit of every SKIP_DRIVES penalty
+            penaltyService.onDriveCreated(reloaded);
+        }
+        return reloaded;
     }
 
     @Override

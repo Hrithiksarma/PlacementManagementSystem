@@ -5,8 +5,11 @@ import { getAllCompanies } from "../services/companyService";
 import { isAdmin } from "../services/authService";
 import "./Drives.css";
 
-const TIERS    = ["All", "Super Dream", "Dream", "Normal"];
+const TIERS    = ["All", "A", "B", "C"];
 const STATUSES = ["Upcoming", "Active", "Completed", "Cancelled"];
+
+// Job categories by CTC: A < 6 LPA · B 6–11.99 LPA · C ≥ 12 LPA
+const tierLabelFor = (t) => (t === "All" ? "All Tiers" : t ? `Tier ${t}` : t);
 
 const emptyForm = {
   companyId:   "",
@@ -133,7 +136,7 @@ function Drives() {
       ? "All Companies"
       : companies.find((c) => String(c.companyId) === filters.companyId)
           ?.companyName ?? "All Companies";
-  const tierLabel = filters.tier === "All" ? "All Tiers" : filters.tier;
+  const tierLabel = tierLabelFor(filters.tier);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "—";
@@ -184,7 +187,7 @@ function Drives() {
                 onChange={(e) => setFilters({ ...filters, tier: e.target.value })}
               >
                 {TIERS.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>{tierLabelFor(t)}</option>
                 ))}
               </select>
             </div>
@@ -315,7 +318,7 @@ function Drives() {
                   <tr key={drive.driveId}>
                     <td>{drive.driveId}</td>
                     <td>{drive.company?.companyName ?? "—"}</td>
-                    <td>{drive.company?.tier ?? "—"}</td>
+                    <td>{drive.company?.tier ? tierLabelFor(drive.company.tier) : "—"}</td>
                     <td>{drive.roleOffered}</td>
                     <td>{drive.packageLpa ?? "—"}</td>
                     <td>{drive.minCgpa ?? "—"}</td>

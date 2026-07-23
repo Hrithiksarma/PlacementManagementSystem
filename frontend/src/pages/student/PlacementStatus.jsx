@@ -11,12 +11,14 @@ import {
 import "./PlacementStatus.css";
 
 const TIER_COLOR = {
-  "Super Dream": "#7c3aed",
-  "Dream":       "#16a34a",
-  "Normal":      "#2563eb",
+  C: "#7c3aed",
+  B: "#16a34a",
+  A: "#2563eb",
 };
 
-const PIPELINE = ["Applied", "Shortlisted", "Interview Scheduled", "Selected"];
+const TIER_LABEL = { A: "Tier A", B: "Tier B", C: "Tier C" };
+
+const PIPELINE = ["Applied", "First Round", "Interview Scheduled", "Selected"];
 
 function formatDate(ds) {
   if (!ds) return "—";
@@ -83,7 +85,7 @@ function OfferCard({ offer }) {
       <div className="ps-offer-company">{offer.companyName ?? "—"}</div>
       {offer.companyTier && (
         <span className="ps-tier-badge" style={{ background: tierColor }}>
-          {offer.companyTier}
+          {TIER_LABEL[offer.companyTier] ?? offer.companyTier}
         </span>
       )}
 
@@ -159,7 +161,7 @@ function PlacementStatus() {
           <ProgressTracker currentStage={status.currentStage} />
         )}
 
-        {/* ── Pending offer (Offer Released — awaiting student decision) ──── */}
+        {/* ── Pending offer (Selected — awaiting student decision) ──────── */}
         {!status?.placed && status?.hasPendingOffer && (
           <div className="ps-pending-offer-card">
             <div className="ps-pending-offer-header">
@@ -171,7 +173,7 @@ function PlacementStatus() {
                   {status.pendingOfferTier && (
                     <span className="ps-tier-badge ms-2"
                           style={{ background: TIER_COLOR[status.pendingOfferTier] ?? "#374151" }}>
-                      {status.pendingOfferTier}
+                      {TIER_LABEL[status.pendingOfferTier] ?? status.pendingOfferTier}
                     </span>
                   )}
                 </div>
@@ -301,7 +303,7 @@ function PlacementStatus() {
                 <div className="ps-tip-body">
                   <div className="ps-tip-title">Improve Your Profile</div>
                   <div className="ps-tip-text">
-                    Higher CGPA unlocks Dream and Super Dream company drives.
+                    Higher CGPA unlocks Tier B and Tier C company drives.
                   </div>
                 </div>
               </div>

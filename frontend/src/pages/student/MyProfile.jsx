@@ -4,11 +4,13 @@ import { getStudentProfile } from "../../services/studentPortalService";
 import "./MyProfile.css";
 
 const PLACEMENT_COLOR = {
-  "Super Dream": "#7c3aed",
-  "Dream":       "#16a34a",
-  "Normal":      "#2563eb",
-  "Unplaced":    "#475569",
+  C:           "#7c3aed",
+  B:           "#16a34a",
+  A:           "#2563eb",
+  "Unplaced":  "#475569",
 };
+
+const TIER_LABEL = { A: "Tier A", B: "Tier B", C: "Tier C" };
 
 function Field({ label, value, highlight }) {
   return (
@@ -74,7 +76,7 @@ function MyProfile() {
             <span className="mp-tier-badge" style={{ background: placementColor }}>
               {profile?.placementTier === "Unplaced" || !profile?.placementTier
                 ? "Not Placed"
-                : `Placed (${profile.placementTier})`}
+                : `Placed (${TIER_LABEL[profile.placementTier] ?? profile.placementTier})`}
             </span>
           </div>
         </div>

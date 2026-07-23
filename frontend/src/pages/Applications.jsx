@@ -3,6 +3,7 @@ import Layout from "../components/Layout";
 import {
   getFilteredApplications,
   updateApplicationStatus,
+  resendSelectionEmail,
   deleteApplication,
 } from "../services/applicationService";
 import { getStudents } from "../services/studentService";
@@ -24,40 +25,45 @@ for (let y = 2015; y <= 2030; y++) BATCH_YEARS.push(y);
 
 // Filters panel — all possible statuses
 const STATUS_OPTIONS = [
-  "Applied", "Shortlisted", "Interview Scheduled",
-  "Selected", "Offer Released", "Offer Accepted", "Offer Rejected",
-  "Rejected", "Withdrawn",
+  "Applied", "First Round", "Interview Scheduled",
+  "Selected", "Offer Accepted", "Offer Rejected",
+  "Offer Declined", "Rejected", "Withdrawn",
 ];
 
-// Admin-editable transitions (Offer Accepted / Rejected are student-only)
+// Admin-editable transitions: any later pipeline stage plus Rejected.
+// "Selected" IS the job offer — the admin's pipeline ends there and the
+// decision (Offer Accepted / Offer Rejected) belongs to the student.
+// (Withdrawn is system/student-set, never an admin transition.)
 const STATUS_TRANSITIONS = {
-  "Applied":             ["Shortlisted", "Rejected"],
-  "Shortlisted":         ["Interview Scheduled", "Rejected"],
+  "Applied":             ["First Round", "Interview Scheduled", "Selected", "Rejected"],
+  "First Round":         ["Interview Scheduled", "Selected", "Rejected"],
   "Interview Scheduled": ["Selected", "Rejected"],
-  "Selected":            ["Offer Released", "Rejected"],
 };
 
 const STATUS_SELECT_STYLE = {
   Applied:               { background: "#eff6ff", color: "#1d4ed8" },
-  Shortlisted:           { background: "#f5f3ff", color: "#6d28d9" },
+  "First Round":         { background: "#f5f3ff", color: "#6d28d9" },
   "Interview Scheduled": { background: "#fffbeb", color: "#92400e" },
-  Selected:              { background: "#fefce8", color: "#92400e" },
 };
 
 const FINAL_STATUS_STYLE = {
-  "Offer Released": { background: "#fffbeb", color: "#78350f", border: "1px solid #fde68a" },
+  Selected:         { background: "#fefce8", color: "#92400e", border: "1px solid #fde68a" },
   "Offer Accepted": { background: "#f0fdf4", color: "#14532d", border: "1px solid #bbf7d0" },
   "Offer Rejected": { background: "#fff7ed", color: "#9a3412", border: "1px solid #fed7aa" },
+  "Offer Declined": { background: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3" },
   Rejected:         { background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca" },
   Withdrawn:        { background: "#f8fafc", color: "#64748b", border: "1px solid #cbd5e1" },
 };
 
+// Tier A/B/C reuse the original normal/dream/super-dream color classes.
 const TIER_BADGE_CLASS = {
-  "Super Dream": "tier-super-dream",
-  "Dream":       "tier-dream",
-  "Normal":      "tier-normal",
-  "Unplaced":    "tier-unplaced",
+  C:           "tier-super-dream",
+  B:           "tier-dream",
+  A:           "tier-normal",
+  "Unplaced":  "tier-unplaced",
 };
+
+const TIER_LABEL = { A: "Tier A", B: "Tier B", C: "Tier C" };
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
 
@@ -73,7 +79,7 @@ function formatDate(dateStr) {
 function TierBadge({ tier }) {
   return (
     <span className={`tier-badge ${TIER_BADGE_CLASS[tier] ?? "tier-unplaced"}`}>
-      {tier ?? "Unplaced"}
+      {tier ? (TIER_LABEL[tier] ?? tier) : "Unplaced"}
     </span>
   );
 }
@@ -164,15 +170,16 @@ function Applications() {
       setAllApplications((prev) =>
         prev.map((a) => {
           if (a.applicationId !== id) return a;
-          // If selected, also update the student's placement tier optimistically
-          if (newStatus === "Selected" && a.drive?.company?.tier) {
-            return {
-              ...a,
-              status: newStatus,
-              student: { ...a.student, placementTier: a.drive.company.tier },
-            };
+          const updated = { ...a, status: newStatus };
+          if (newStatus === "Selected") {
+            // Backend auto-sends the congratulations email on selection, and
+            // also sets the student's placement tier.
+            updated.selectionEmailSent = true;
+            if (a.drive?.company?.tier) {
+              updated.student = { ...a.student, placementTier: a.drive.company.tier };
+            }
           }
-          return { ...a, status: newStatus };
+          return updated;
         })
       );
       setSuccessMessage(`Status updated to "${newStatus}".`);
@@ -181,6 +188,24 @@ function Applications() {
                || err.response?.data?.error
                || "Status update failed.";
       setErrorMessage(msg);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleSendEmail = async (app) => {
+    setSavingId(app.applicationId);
+    try {
+      await resendSelectionEmail(app.applicationId);
+      // Flip this row to "Sent ✓" immediately; future loads read the real flag.
+      setAllApplications((prev) =>
+        prev.map((a) =>
+          a.applicationId === app.applicationId ? { ...a, selectionEmailSent: true } : a
+        )
+      );
+      setSuccessMessage("Selection email sent.");
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message ?? "Failed to send the email.");
     } finally {
       setSavingId(null);
     }
@@ -436,11 +461,24 @@ function Applications() {
                           ...FINAL_STATUS_STYLE[app.status],
                         }}
                       >
-                        {app.status === "Offer Accepted" ? "✓" : app.status === "Offer Released" ? "📩" : app.status === "Withdrawn" ? "–" : "✗"} {app.status}
+                        {app.status === "Offer Accepted" ? "✓" : app.status === "Selected" ? "📩" : app.status === "Withdrawn" ? "–" : "✗"} {app.status}
                       </span>
                     )}
                   </td>
                   <td>
+                    {app.status === "Selected" && (
+                      <button
+                        className={`btn btn-sm me-2 ${app.selectionEmailSent ? "btn-secondary" : "btn-primary"}`}
+                        disabled={app.selectionEmailSent || savingId === app.applicationId}
+                        onClick={() => handleSendEmail(app)}
+                      >
+                        {app.selectionEmailSent
+                          ? "Sent ✓"
+                          : savingId === app.applicationId
+                            ? "Sending…"
+                            : "✉️ Send Email"}
+                      </button>
+                    )}
                     <button
                       className="btn btn-sm action-delete"
                       onClick={() => handleDelete(app.applicationId)}

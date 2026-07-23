@@ -102,12 +102,12 @@ public class DashboardServiceImpl implements DashboardService {
                 : Math.round((placed * 100.0 / students.size()) * 10.0) / 10.0);
 
         // ── Tier distribution ─────────────────────────────────────────────────
-        dto.setSuperDreamCount(students.stream()
-                .filter(s -> "Super Dream".equals(s.getPlacementTier())).count());
-        dto.setDreamCount(students.stream()
-                .filter(s -> "Dream".equals(s.getPlacementTier())).count());
-        dto.setNormalCount(students.stream()
-                .filter(s -> "Normal".equals(s.getPlacementTier())).count());
+        dto.setTierCCount(students.stream()
+                .filter(s -> "C".equals(s.getPlacementTier())).count());
+        dto.setTierBCount(students.stream()
+                .filter(s -> "B".equals(s.getPlacementTier())).count());
+        dto.setTierACount(students.stream()
+                .filter(s -> "A".equals(s.getPlacementTier())).count());
         dto.setUnplacedCount(students.stream()
                 .filter(s -> s.getPlacementTier() == null
                         || s.getPlacementTier().equalsIgnoreCase("Unplaced"))

@@ -66,7 +66,19 @@ public class SecurityConfig {
                 // ── Drives: delete of completed → checked at controller; rest → both ──
                 .requestMatchers("/drives/**").hasAnyRole("ADMIN", "PLACEMENT_OFFICER")
 
-                // ── Applications: POST blocked (creation only via /api/student/apply)
+                // ── Google Form drive submissions: review + include → both roles ──
+                .requestMatchers("/form-submissions/**").hasAnyRole("ADMIN", "PLACEMENT_OFFICER")
+
+                // ── Google Form student registrations: review + import → both roles ──
+                .requestMatchers("/student-form-submissions/**").hasAnyRole("ADMIN", "PLACEMENT_OFFICER")
+
+                // ── Withdrawal/decline penalties: review + lift → both roles ──
+                .requestMatchers("/penalties/**").hasAnyRole("ADMIN", "PLACEMENT_OFFICER")
+
+                // ── Applications: resend-email action allowed for staff…
+                .requestMatchers(HttpMethod.POST, "/applications/*/resend-selection-email")
+                    .hasAnyRole("ADMIN", "PLACEMENT_OFFICER")
+                // …but application creation stays blocked (only via /api/student/apply)
                 .requestMatchers(HttpMethod.POST, "/applications/**").denyAll()
                 // Applications: everything else → ADMIN or PLACEMENT_OFFICER
                 .requestMatchers("/applications/**").hasAnyRole("ADMIN", "PLACEMENT_OFFICER")

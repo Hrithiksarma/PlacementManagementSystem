@@ -14,4 +14,7 @@ export const updateApplication = (id, application) => axios.put(`${API_URL}/${id
 export const updateApplicationStatus = (id, status) =>
   axios.put(`${API_URL}/${id}/status`, { status });
 
+export const resendSelectionEmail = (id) =>
+  axios.post(`${API_URL}/${id}/resend-selection-email`);
+
 export const deleteApplication = (id) => axios.delete(`${API_URL}/${id}`);

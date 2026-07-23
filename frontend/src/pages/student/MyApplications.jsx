@@ -4,37 +4,46 @@ import {
   getStudentApplications,
   acceptOffer,
   rejectOffer,
+  withdrawApplication,
+  declineOffer,
+  getWithdrawalPenaltyPreview,
+  getPenaltyStatus,
 } from "../../services/studentPortalService";
 import "./MyApplications.css";
 
 const PIPELINE = [
-  "Applied", "Shortlisted", "Interview Scheduled",
-  "Selected", "Offer Released", "Offer Accepted",
+  "Applied", "First Round", "Interview Scheduled",
+  "Selected", "Offer Accepted",
 ];
 
+// "Selected" IS the job offer (no separate Offer Released stage) — it's
+// where the Accept/Reject decision banner appears.
 const STATUS_META = {
   Applied:               { color: "#2563eb", bg: "#eff6ff",  icon: "📝" },
-  Shortlisted:           { color: "#7c3aed", bg: "#f5f3ff",  icon: "⭐" },
+  "First Round":         { color: "#7c3aed", bg: "#f5f3ff",  icon: "⭐" },
   "Interview Scheduled": { color: "#d97706", bg: "#fffbeb",  icon: "📅" },
-  Selected:              { color: "#0891b2", bg: "#ecfeff",  icon: "🎯" },
-  "Offer Released":      { color: "#78350f", bg: "#fffbeb",  icon: "📩" },
+  Selected:              { color: "#78350f", bg: "#fffbeb",  icon: "📩" },
   "Offer Accepted":      { color: "#16a34a", bg: "#f0fdf4",  icon: "✅" },
   "Offer Rejected":      { color: "#ea580c", bg: "#fff7ed",  icon: "↩️" },
+  "Offer Declined":      { color: "#be123c", bg: "#fff1f2",  icon: "⛔" },
   Rejected:              { color: "#dc2626", bg: "#fef2f2",  icon: "❌" },
   Withdrawn:             { color: "#64748b", bg: "#f8fafc",  icon: "🚫" },
 };
 
 const TIER_COLOR = {
-  "Super Dream": "#7c3aed",
-  "Dream":       "#16a34a",
-  "Normal":      "#2563eb",
+  C: "#7c3aed",
+  B: "#16a34a",
+  A: "#2563eb",
 };
+
+const TIER_LABEL = { A: "Tier A", B: "Tier B", C: "Tier C" };
 
 function StatusTimeline({ status }) {
   const isRejected      = status === "Rejected";
   const isWithdrawn     = status === "Withdrawn";
   const isOfferRejected = status === "Offer Rejected";
-  const isTerminal      = isRejected || isWithdrawn || isOfferRejected;
+  const isOfferDeclined = status === "Offer Declined";
+  const isTerminal      = isRejected || isWithdrawn || isOfferRejected || isOfferDeclined;
   const activeIdx       = PIPELINE.indexOf(status);
 
   return (
@@ -80,6 +89,12 @@ function StatusTimeline({ status }) {
           <div className="ma-step-label" style={{ color: "#64748b" }}>Withdrawn</div>
         </div>
       )}
+      {isOfferDeclined && (
+        <div className="ma-timeline-step">
+          <div className="ma-step-dot" style={{ background: "#be123c", color: "#fff", border: "none" }}>⛔</div>
+          <div className="ma-step-label" style={{ color: "#be123c" }}>Offer Declined</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -98,11 +113,21 @@ function MyApplications() {
   const [filter,  setFilter]  = useState("All");
   const [acting,  setActing]  = useState(null);
   const [toast,   setToast]   = useState(null);
+  const [penalty, setPenalty] = useState(null);   // current bar status (banner)
+  // { app, preview, mode: "withdraw" | "decline", acknowledged } — null = closed
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  const loadPenaltyStatus = () => {
+    getPenaltyStatus()
+      .then((res) => setPenalty(res.data))
+      .catch(() => {});
+  };
 
   useEffect(() => {
     getStudentApplications()
       .then((res) => { setApps(res.data); setLoading(false); })
       .catch(() => { setError("Failed to load applications."); setLoading(false); });
+    loadPenaltyStatus();
   }, []);
 
   useEffect(() => {
@@ -126,19 +151,39 @@ function MyApplications() {
     }
   };
 
-  const handleReject = async (appId) => {
-    if (!window.confirm("Reject this offer? This cannot be undone.")) return;
-    setActing(appId);
+  // Opens the confirmation modal with the server-computed penalty for this app.
+  const openConfirm = async (app, mode) => {
+    setActing(app.applicationId);
     try {
-      await rejectOffer(appId);
-      setApps((prev) =>
-        prev.map((a) => a.applicationId === appId ? { ...a, status: "Offer Rejected" } : a)
-      );
-      setToast({ type: "success", msg: "Offer rejected. You can continue applying to other drives." });
-    } catch (err) {
-      setToast({ type: "error", msg: err.response?.data?.message ?? "Failed to reject offer." });
+      const res = await getWithdrawalPenaltyPreview(app.applicationId);
+      setConfirmModal({ app, preview: res.data, mode, acknowledged: false });
+    } catch {
+      setToast({ type: "error", msg: "Could not determine the withdrawal penalty. Try again." });
     } finally {
       setActing(null);
+    }
+  };
+
+  const handleConfirmedAction = async () => {
+    const { app, mode } = confirmModal;
+    setActing(app.applicationId);
+    try {
+      const res = mode === "decline" ? await declineOffer(app.applicationId)
+                : mode === "reject"  ? await rejectOffer(app.applicationId)
+                :                      await withdrawApplication(app.applicationId);
+      const newStatus = mode === "decline" ? "Offer Declined"
+                       : mode === "reject"  ? "Offer Rejected"
+                       :                      "Withdrawn";
+      setApps((prev) =>
+        prev.map((a) => a.applicationId === app.applicationId ? { ...a, status: newStatus } : a)
+      );
+      setToast({ type: "success", msg: res.data?.message ?? "Done." });
+      loadPenaltyStatus();
+    } catch (err) {
+      setToast({ type: "error", msg: err.response?.data?.message ?? "Action failed." });
+    } finally {
+      setActing(null);
+      setConfirmModal(null);
     }
   };
 
@@ -172,6 +217,19 @@ function MyApplications() {
             <span className="me-2">{toast.type === "success" ? "✅" : "⚠️"}</span>
             <span className="flex-grow-1">{toast.msg}</span>
             <button className="btn-close btn-close-sm" onClick={() => setToast(null)} />
+          </div>
+        )}
+
+        {/* ── Active penalty banner ──────────────────────────────────── */}
+        {penalty?.barred && (
+          <div className="alert alert-warning d-flex align-items-center py-2">
+            <span className="me-2">⚠️</span>
+            <span className="flex-grow-1">
+              {penalty.message}
+              {penalty.disciplinaryReferral && (
+                <strong> Your record has been flagged for disciplinary referral.</strong>
+              )}
+            </span>
           </div>
         )}
 
@@ -217,7 +275,11 @@ function MyApplications() {
             {displayed.map((app) => {
               const meta      = STATUS_META[app.status] ?? STATUS_META.Applied;
               const tierColor = TIER_COLOR[app.companyTier] ?? "#374151";
-              const isPending = app.status === "Offer Released";
+              // "Selected" IS the job offer — that stage shows Accept/Reject
+              // instead of a Withdraw button.
+              const isPending = app.status === "Selected";
+              const canWithdraw = ["Applied", "First Round", "Interview Scheduled"]
+                .includes(app.status);
 
               return (
                 <div key={app.applicationId}
@@ -232,17 +294,37 @@ function MyApplications() {
                     <div className="ma-card-right">
                       {app.companyTier && (
                         <span className="ma-tier-badge" style={{ background: tierColor }}>
-                          {app.companyTier}
+                          {TIER_LABEL[app.companyTier] ?? app.companyTier}
                         </span>
                       )}
                       <span className="ma-status-badge"
                             style={{ background: meta.bg, color: meta.color }}>
                         {meta.icon} {app.status}
                       </span>
+                      {canWithdraw && (
+                        <button
+                          className="btn btn-sm btn-outline-secondary"
+                          style={{ fontSize: "0.75rem" }}
+                          disabled={acting === app.applicationId}
+                          onClick={() => openConfirm(app, "withdraw")}
+                        >
+                          {acting === app.applicationId ? "…" : "🚫 Withdraw"}
+                        </button>
+                      )}
+                      {app.status === "Offer Accepted" && (
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          style={{ fontSize: "0.75rem" }}
+                          disabled={acting === app.applicationId}
+                          onClick={() => openConfirm(app, "decline")}
+                        >
+                          {acting === app.applicationId ? "…" : "🚫 Withdraw"}
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  {/* Offer Released — decision banner */}
+                  {/* Selected — this IS the job offer, decision banner */}
                   {isPending && (
                     <div className="ma-offer-banner">
                       <div className="ma-offer-banner-body">
@@ -265,9 +347,9 @@ function MyApplications() {
                         <button
                           className="btn btn-sm ma-btn-reject"
                           disabled={acting === app.applicationId}
-                          onClick={() => handleReject(app.applicationId)}
+                          onClick={() => openConfirm(app, "reject")}
                         >
-                          ✕ Reject
+                          {acting === app.applicationId ? "…" : "✕ Reject"}
                         </button>
                       </div>
                     </div>
@@ -293,6 +375,73 @@ function MyApplications() {
             })}
           </div>
         )}
+        {/* ── Penalty confirmation modal ──────────────────────────────── */}
+        {confirmModal && (() => {
+          const { app, preview, mode, acknowledged } = confirmModal;
+          const blocked   = preview.penaltyType === "BLOCKED";
+          const hasPenalty = !blocked && preview.penaltyType !== "NONE";
+          const isPermanent = preview.penaltyType === "PERMANENT_BAN";
+          const verb = mode === "reject" ? "Reject Offer" : "Withdraw";
+
+          return (
+            <div style={{
+              position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)",
+              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1050,
+            }}>
+              <div style={{
+                background: "#fff", borderRadius: 12, padding: "22px 24px",
+                width: "min(480px, 92vw)", boxShadow: "0 20px 50px rgba(0,0,0,0.3)",
+              }}>
+                <h5 className="mb-1">
+                  {blocked ? "Not allowed" : `${verb} — ${app.companyName ?? "this drive"}?`}
+                </h5>
+                <div className="text-muted mb-3" style={{ fontSize: "0.85rem" }}>
+                  {app.roleOffered} · current stage: <strong>{app.status}</strong>
+                </div>
+
+                <div style={{
+                  background: hasPenalty ? "#fef2f2" : "#f0fdf4",
+                  border: `1px solid ${hasPenalty ? "#fecaca" : "#bbf7d0"}`,
+                  color: hasPenalty ? "#991b1b" : "#166534",
+                  borderRadius: 8, padding: "12px 14px", fontSize: "0.88rem",
+                }}>
+                  {hasPenalty ? "⚠️ " : "ℹ️ "}{preview.message}
+                </div>
+
+                {isPermanent && !blocked && (
+                  <label className="d-flex align-items-start gap-2 mt-3" style={{ fontSize: "0.85rem" }}>
+                    <input
+                      type="checkbox"
+                      checked={acknowledged}
+                      onChange={(e) =>
+                        setConfirmModal({ ...confirmModal, acknowledged: e.target.checked })}
+                    />
+                    <span>
+                      I understand this <strong>permanently</strong> ends my participation in
+                      campus placements and refers my record for disciplinary action.
+                    </span>
+                  </label>
+                )}
+
+                <div className="d-flex justify-content-end gap-2 mt-4">
+                  <button className="btn btn-sm btn-outline-secondary"
+                          onClick={() => setConfirmModal(null)}>
+                    Cancel
+                  </button>
+                  {!blocked && (
+                    <button
+                      className={`btn btn-sm ${hasPenalty ? "btn-danger" : "btn-primary"}`}
+                      disabled={acting === app.applicationId || (isPermanent && !acknowledged)}
+                      onClick={handleConfirmedAction}
+                    >
+                      {acting === app.applicationId ? "…" : `Confirm ${verb}`}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </Layout>
   );

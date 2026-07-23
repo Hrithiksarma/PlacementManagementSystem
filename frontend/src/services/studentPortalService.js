@@ -9,5 +9,10 @@ export const getPlacementStatus     = ()         => axios.get(`${BASE}/placement
 export const getPlacementOffers     = ()         => axios.get(`${BASE}/placement-offers`);
 export const acceptOffer            = (appId)    => axios.post(`${BASE}/applications/${appId}/accept-offer`);
 export const rejectOffer            = (appId)    => axios.post(`${BASE}/applications/${appId}/reject-offer`);
+export const withdrawApplication    = (appId)    => axios.post(`${BASE}/applications/${appId}/withdraw`);
+export const declineOffer           = (appId)    => axios.post(`${BASE}/applications/${appId}/decline-offer`);
+export const getWithdrawalPenaltyPreview = (appId) =>
+  axios.get(`${BASE}/applications/${appId}/withdrawal-penalty-preview`);
+export const getPenaltyStatus       = ()         => axios.get(`${BASE}/penalty-status`);
 export const applyToDrive           = (driveId)  => axios.post(`${BASE}/apply/${driveId}`);
 export const getRecentAchievements  = ()         => axios.get(`${BASE}/achievements`);

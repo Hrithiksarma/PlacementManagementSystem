@@ -1,6 +1,7 @@
 package com.pmrs.backend.service;
 
 import com.pmrs.backend.dto.EligibleDriveDTO;
+import com.pmrs.backend.dto.PenaltyStatusDTO;
 import com.pmrs.backend.dto.PlacementAchievementDTO;
 import com.pmrs.backend.dto.PlacementOfferDTO;
 import com.pmrs.backend.dto.PlacementStatusDTO;
@@ -21,7 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pmrs.backend.exception.ResourceNotFoundException;
 import com.pmrs.backend.util.ApplicationStatusValidator;
+import com.pmrs.backend.util.TierPolicy;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -40,17 +43,20 @@ public class StudentPortalServiceImpl implements StudentPortalService {
     private final DriveRepository               driveRepository;
     private final ApplicationRepository         applicationRepository;
     private final EligibilityCriteriaRepository eligibilityCriteriaRepository;
+    private final PenaltyService                penaltyService;
 
     public StudentPortalServiceImpl(UserRepository userRepository,
                                     StudentRepository studentRepository,
                                     DriveRepository driveRepository,
                                     ApplicationRepository applicationRepository,
-                                    EligibilityCriteriaRepository eligibilityCriteriaRepository) {
+                                    EligibilityCriteriaRepository eligibilityCriteriaRepository,
+                                    PenaltyService penaltyService) {
         this.userRepository               = userRepository;
         this.studentRepository            = studentRepository;
         this.driveRepository              = driveRepository;
         this.applicationRepository        = applicationRepository;
         this.eligibilityCriteriaRepository = eligibilityCriteriaRepository;
+        this.penaltyService               = penaltyService;
     }
 
     // ── Resolve username → Student ────────────────────────────────────────────
@@ -112,42 +118,47 @@ public class StudentPortalServiceImpl implements StudentPortalService {
         return null;
     }
 
+    /** All of the student's accepted offers — the source of "current CTC". */
+    private List<Application> getAcceptedOffers(Student student) {
+        return applicationRepository.findByStudent_StudentId(student.getStudentId()).stream()
+                .filter(a -> "Offer Accepted".equalsIgnoreCase(a.getStatus()))
+                .toList();
+    }
+
+    /** Highest CTC among the student's accepted offers, or null if unplaced. */
+    private static BigDecimal currentOfferCtc(List<Application> accepted) {
+        return accepted.stream()
+                .map(a -> a.getDrive() != null ? a.getDrive().getPackageLpa() : null)
+                .filter(ctc -> ctc != null)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+    }
+
     /**
-     * Placement-progression restriction: does the student's current placement
-     * outcome (Students.placement_tier, set by the after_selection trigger)
-     * block them from applying to a drive of this company tier?
+     * Job-categories upgradation policy (see {@link TierPolicy}): a placed
+     * student may take at most ONE further offer, and only into a company
+     * whose CTC clears the ratio required by their current tier.
      *
-     * placement_tier is the ACTUAL offer tier — Unplaced / Normal / Dream / Super Dream.
-     * It is NOT a CGPA-based academic classification.
+     * Unplaced students are always allowed through (this is first placement,
+     * not upgradation).
      */
-    private String validatePlacementRestriction(Student student, String driveTier) {
-        String pt = student.getPlacementTier() != null ? student.getPlacementTier() : "Unplaced";
-        switch (pt) {
-            case "Unplaced":
-                return null;
-            case "Normal":
-                if ("Normal".equals(driveTier)) {
-                    return "Already placed in a Normal company. "
-                         + "You can only apply for Dream or Super Dream opportunities.";
-                }
-                return null;
-            case "Dream":
-                if (!"Super Dream".equals(driveTier)) {
-                    return "Already placed in a Dream company. "
-                         + "Only Super Dream opportunities are available.";
-                }
-                return null;
-            case "Super Dream":
-                return "Already placed in a Super Dream company. "
-                     + "Placement process completed.";
-            default:
-                return null;
+    private String validateUpgradationPolicy(Student student, Drive drive) {
+        List<Application> accepted = getAcceptedOffers(student);
+        if (accepted.isEmpty()) {
+            return null; // first placement — no restriction
         }
+        if (accepted.size() >= 2) {
+            return TierPolicy.upgradationUsedMessage();
+        }
+        BigDecimal currentCtc = currentOfferCtc(accepted);
+        BigDecimal newCtc     = drive.getPackageLpa();
+        String driveTier      = drive.getCompany() != null ? drive.getCompany().getTier() : null;
+        return TierPolicy.upgradationBlockReason(currentCtc, newCtc, driveTier);
     }
 
     /**
      * Single source of truth for drive eligibility.
-     * Checks academic rules first, then placement-progression rules.
+     * Checks academic rules first, then the upgradation policy.
      * Returns null when the student is eligible, or a reason string when not.
      */
     private String getEligibilityReason(Student student, Drive drive,
@@ -155,8 +166,7 @@ public class StudentPortalServiceImpl implements StudentPortalService {
         String academic = validateAcademicEligibility(student, ec);
         if (academic != null) return academic;
 
-        String driveTier = drive.getCompany() != null ? drive.getCompany().getTier() : null;
-        return validatePlacementRestriction(student, driveTier);
+        return validateUpgradationPolicy(student, drive);
     }
 
     // ── Profile ───────────────────────────────────────────────────────────────
@@ -185,9 +195,12 @@ public class StudentPortalServiceImpl implements StudentPortalService {
     // ── Eligible Drives ───────────────────────────────────────────────────────
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<EligibleDriveDTO> getEligibleDrives(String username) {
         Student s = resolveStudent(username);
+
+        // Penalty bar applies to every drive; shown per-card and blocks Apply.
+        PenaltyStatusDTO bar = penaltyService.getPenaltyStatus(s.getStudentId());
 
         Set<Integer> appliedDriveIds = applicationRepository
                 .findByStudent_StudentId(s.getStudentId())
@@ -209,7 +222,17 @@ public class StudentPortalServiceImpl implements StudentPortalService {
                     criteriaByDrive.getOrDefault(drive.getDriveId(), List.of());
             Optional<EligibilityCriteria> ecOpt = findApplicable(driveCriteria, s);
 
-            String reason = getEligibilityReason(s, drive, ecOpt);
+            // Penalty bars and academic (CGPA/backlog) misses are hard blocks —
+            // the drive is shown but visibly disabled. A failed upgradation
+            // check is different: the student HAS an offer and this drive is
+            // otherwise open to them, so the card stays fully interactive and
+            // the policy explanation only surfaces if they actually try to
+            // apply (server-side rejection message, same wording as here).
+            String hardBlockReason = bar.isBarred() ? bar.getMessage()
+                                                     : validateAcademicEligibility(s, ecOpt);
+            String upgradationReason = hardBlockReason == null
+                    ? validateUpgradationPolicy(s, drive) : null;
+            String reason = hardBlockReason != null ? hardBlockReason : upgradationReason;
 
             EligibleDriveDTO dto = new EligibleDriveDTO();
             dto.setDriveId(drive.getDriveId());
@@ -229,6 +252,7 @@ public class StudentPortalServiceImpl implements StudentPortalService {
             dto.setAlreadyApplied(appliedDriveIds.contains(drive.getDriveId()));
             dto.setEligible(reason == null);
             dto.setEligibilityReason(reason);
+            dto.setUpgradationBlocked(upgradationReason != null);
             result.add(dto);
         }
         return result;
@@ -272,8 +296,8 @@ public class StudentPortalServiceImpl implements StudentPortalService {
     // ── Placement Status ──────────────────────────────────────────────────────
 
     private static final List<String> STAGE_PRIORITY = List.of(
-            "Offer Accepted", "Offer Released", "Selected",
-            "Interview Scheduled", "Shortlisted", "Applied", "Rejected"
+            "Offer Accepted", "Selected",
+            "Interview Scheduled", "First Round", "Applied", "Rejected"
     );
 
     private String computeCurrentStage(List<Application> apps) {
@@ -337,9 +361,9 @@ public class StudentPortalServiceImpl implements StudentPortalService {
             dto.setMessage("Your placement journey is in progress. Keep applying!");
         }
 
-        // Pending offer: an "Offer Released" app awaiting student decision
+        // Pending offer: a "Selected" app awaiting the student's Accept/Reject decision
         apps.stream()
-                .filter(a -> "Offer Released".equalsIgnoreCase(a.getStatus()))
+                .filter(a -> "Selected".equalsIgnoreCase(a.getStatus()))
                 .findFirst()
                 .ifPresent(a -> {
                     dto.setHasPendingOffer(true);
@@ -393,19 +417,9 @@ public class StudentPortalServiceImpl implements StudentPortalService {
 
     // ── All Selected Offers ───────────────────────────────────────────────────
 
-    private static int tierRankStr(String tier) {
-        if (tier == null) return 0;
-        return switch (tier) {
-            case "Super Dream" -> 3;
-            case "Dream"       -> 2;
-            case "Normal"      -> 1;
-            default            -> 0;
-        };
-    }
-
     private int tierRank(Application a) {
         if (a.getDrive() == null || a.getDrive().getCompany() == null) return 0;
-        return tierRankStr(a.getDrive().getCompany().getTier());
+        return TierPolicy.rank(a.getDrive().getCompany().getTier());
     }
 
     @Override
@@ -460,41 +474,44 @@ public class StudentPortalServiceImpl implements StudentPortalService {
         if (!app.getStudent().getStudentId().equals(s.getStudentId())) {
             throw new IllegalStateException("You can only accept your own offers.");
         }
-        if (!"Offer Released".equalsIgnoreCase(app.getStatus())) {
+        if (!"Selected".equalsIgnoreCase(app.getStatus())) {
             throw new IllegalStateException(
-                    "Cannot accept: status is '" + app.getStatus() + "', expected 'Offer Released'.");
+                    "Cannot accept: status is '" + app.getStatus() + "', expected 'Selected'.");
         }
+
+        // Captured BEFORE this acceptance: tells us whether this is the
+        // student's first placement or their one-time upgradation.
+        List<Application> priorAccepted = getAcceptedOffers(s);
+        if (priorAccepted.size() >= 2) {
+            throw new IllegalStateException(TierPolicy.upgradationUsedMessage());
+        }
+        boolean isUpgrade = priorAccepted.size() == 1;
 
         app.setStatus("Offer Accepted");
         app.setOfferAcceptedAt(LocalDateTime.now());
         app.setUpdatedAt(LocalDate.now());
         applicationRepository.save(app);
 
-        // Upgrade placement tier (only if this offer is higher than current)
-        String companyTier = app.getDrive() != null && app.getDrive().getCompany() != null
-                ? app.getDrive().getCompany().getTier() : null;
-        if (companyTier != null && tierRankStr(companyTier) > tierRankStr(s.getPlacementTier())) {
-            s.setPlacementTier(companyTier);
+        BigDecimal newCtc = app.getDrive() != null ? app.getDrive().getPackageLpa() : null;
+        String newTier = TierPolicy.tierForCtc(newCtc);
+        if (newTier != null) {
+            s.setPlacementTier(newTier);
             studentRepository.save(s);
         }
 
-        // Revoke active applications at tiers now blocked
-        if (companyTier != null) {
-            List<String> tiersToRevoke = switch (companyTier) {
-                case "Normal"      -> List.of("Normal");
-                case "Dream"       -> List.of("Normal", "Dream");
-                case "Super Dream" -> List.of("Normal", "Dream", "Super Dream");
-                default            -> List.of();
-            };
-            if (!tiersToRevoke.isEmpty()) {
-                revokeOnAccept(s, tiersToRevoke, app.getApplicationId());
-            }
+        if (isUpgrade) {
+            // The one-time upgradation is now used — no third offer, ever.
+            revokeAllActive(s, app.getApplicationId());
+        } else if (newCtc != null) {
+            // First placement: only applications that could still legitimately
+            // be pursued under the upgradation policy remain open.
+            revokeIneligibleUnderPolicy(s, newCtc, app.getApplicationId());
         }
     }
 
     @Override
     @Transactional
-    public void rejectOffer(String username, Integer applicationId) {
+    public String rejectOffer(String username, Integer applicationId) {
         Student s = resolveStudent(username);
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found: " + applicationId));
@@ -502,27 +519,137 @@ public class StudentPortalServiceImpl implements StudentPortalService {
         if (!app.getStudent().getStudentId().equals(s.getStudentId())) {
             throw new IllegalStateException("You can only reject your own offers.");
         }
-        if (!"Offer Released".equalsIgnoreCase(app.getStatus())) {
+        if (!"Selected".equalsIgnoreCase(app.getStatus())) {
             throw new IllegalStateException(
-                    "Cannot reject: status is '" + app.getStatus() + "', expected 'Offer Released'.");
+                    "Cannot reject: status is '" + app.getStatus() + "', expected 'Selected'.");
         }
 
         app.setStatus("Offer Rejected");
         app.setOfferRejectedAt(LocalDateTime.now());
         app.setUpdatedAt(LocalDate.now());
         applicationRepository.save(app);
-        // No revocation — student continues applying
+        // No revocation — student continues applying, but rejecting at this
+        // final stage still carries the same 1-month ban as withdrawing here.
+        String penaltyMsg = penaltyService.applyWithdrawalPenalty(app, "Selected");
+        return "Offer rejected. " + penaltyMsg;
     }
 
-    private void revokeOnAccept(Student student, List<String> tiersToRevoke, Integer exceptAppId) {
+    @Override
+    @Transactional
+    public String withdrawApplication(String username, Integer applicationId) {
+        Student s = resolveStudent(username);
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found: " + applicationId));
+
+        if (!app.getStudent().getStudentId().equals(s.getStudentId())) {
+            throw new IllegalStateException("You can only withdraw your own applications.");
+        }
+
+        String status = app.getStatus() == null || app.getStatus().isBlank()
+                ? "Applied" : app.getStatus();
+        if (ApplicationStatusValidator.isFinalStatus(status)) {
+            throw new IllegalStateException(
+                    "Cannot withdraw: application is already " + status + ".");
+        }
+        if ("Selected".equalsIgnoreCase(status)) {
+            throw new IllegalStateException(
+                    "This application has an offer awaiting your decision — "
+                    + "please accept or reject it instead of withdrawing.");
+        }
+
+        app.setStatus("Withdrawn");
+        app.setUpdatedAt(LocalDate.now());
+        applicationRepository.save(app);
+
+        String penaltyMsg = penaltyService.applyWithdrawalPenalty(app, status);
+        return penaltyMsg == null
+                ? "Application withdrawn. No penalty applies at this stage."
+                : "Application withdrawn. " + penaltyMsg;
+    }
+
+    @Override
+    @Transactional
+    public String declineAcceptedOffer(String username, Integer applicationId) {
+        Student s = resolveStudent(username);
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found: " + applicationId));
+
+        if (!app.getStudent().getStudentId().equals(s.getStudentId())) {
+            throw new IllegalStateException("You can only decline your own offers.");
+        }
+        if (!"Offer Accepted".equalsIgnoreCase(app.getStatus())) {
+            throw new IllegalStateException(
+                    "Cannot decline: status is '" + app.getStatus() + "', expected 'Offer Accepted'.");
+        }
+
+        app.setStatus("Offer Declined");
+        app.setUpdatedAt(LocalDate.now());
+        applicationRepository.save(app);
+
+        // Recompute placement tier from any remaining accepted offer's CTC
+        // (there can be at most one left, since upgradation is one-time).
+        BigDecimal remainingCtc = currentOfferCtc(getAcceptedOffers(s));
+        String newTier = remainingCtc != null ? TierPolicy.tierForCtc(remainingCtc) : "Unplaced";
+        s.setPlacementTier(newTier);
+        studentRepository.save(s);
+
+        return "Offer declined. " + penaltyService.applyDeclinePenalty(app);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, String> previewWithdrawalPenalty(String username, Integer applicationId) {
+        Student s = resolveStudent(username);
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found: " + applicationId));
+        if (!app.getStudent().getStudentId().equals(s.getStudentId())) {
+            throw new IllegalStateException("You can only view your own applications.");
+        }
+        return penaltyService.previewPenalty(app.getStatus());
+    }
+
+    @Override
+    @Transactional
+    public PenaltyStatusDTO getPenaltyStatus(String username) {
+        Student s = resolveStudent(username);
+        return penaltyService.getPenaltyStatus(s.getStudentId());
+    }
+
+    /**
+     * The one-time upgradation has just been consumed (this is the student's
+     * SECOND accepted offer) — there is no third offer, so every other
+     * active application is withdrawn unconditionally.
+     */
+    private void revokeAllActive(Student student, Integer exceptAppId) {
+        withdrawMatching(student, exceptAppId, a -> true);
+    }
+
+    /**
+     * First placement just happened at {@code newCtc} — active applications
+     * that could no longer be legitimately pursued under the upgradation
+     * policy (same tier or below, or failing the CTC ratio) are withdrawn.
+     * Applications that DO clear the policy are left open as the student's
+     * one remaining upgradation attempt.
+     */
+    private void revokeIneligibleUnderPolicy(Student student, BigDecimal newCtc, Integer exceptAppId) {
+        withdrawMatching(student, exceptAppId, a -> {
+            if (a.getDrive() == null) return false;
+            String reason = TierPolicy.upgradationBlockReason(
+                    newCtc, a.getDrive().getPackageLpa(),
+                    a.getDrive().getCompany() != null ? a.getDrive().getCompany().getTier() : null);
+            return reason != null;
+        });
+    }
+
+    private void withdrawMatching(Student student, Integer exceptAppId,
+                                  java.util.function.Predicate<Application> shouldWithdraw) {
         List<Application> all = applicationRepository.findByStudent_StudentId(student.getStudentId());
         List<Application> toWithdraw = new ArrayList<>();
         for (Application a : all) {
             if (a.getApplicationId().equals(exceptAppId)) continue;
             String st = a.getStatus() != null ? a.getStatus() : "Applied";
             if (ApplicationStatusValidator.isFinalStatus(st)) continue;
-            if (a.getDrive() != null && a.getDrive().getCompany() != null
-                    && tiersToRevoke.contains(a.getDrive().getCompany().getTier())) {
+            if (shouldWithdraw.test(a)) {
                 a.setStatus("Withdrawn");
                 a.setUpdatedAt(LocalDate.now());
                 toWithdraw.add(a);
@@ -546,6 +673,12 @@ public class StudentPortalServiceImpl implements StudentPortalService {
         if ("Cancelled".equalsIgnoreCase(drive.getStatus())
                 || "Completed".equalsIgnoreCase(drive.getStatus())) {
             throw new IllegalArgumentException("Applications are closed for this drive");
+        }
+
+        // Active withdrawal/decline penalties override everything else
+        PenaltyStatusDTO bar = penaltyService.getPenaltyStatus(s.getStudentId());
+        if (bar.isBarred()) {
+            throw new IllegalArgumentException(bar.getMessage());
         }
 
         // Re-verify all eligibility rules (must mirror the DB trigger)

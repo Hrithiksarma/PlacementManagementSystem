@@ -11,15 +11,17 @@ import "./Dashboard.css";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TIER_COLORS = {
-  "Super Dream": "#7c3aed",
-  "Dream":       "#16a34a",
-  "Normal":      "#2563eb",
-  "Unplaced":    "#374151",
+  C:           "#7c3aed",
+  B:           "#16a34a",
+  A:           "#2563eb",
+  "Unplaced":  "#374151",
 };
+
+const TIER_LABEL = { A: "Tier A", B: "Tier B", C: "Tier C" };
 
 const STATUS_COLOR = {
   "Selected":              "#16a34a",
-  "Shortlisted":           "#7c3aed",
+  "First Round":           "#7c3aed",
   "Interview Scheduled":   "#d97706",
   "Applied":               "#2563eb",
   "Rejected":              "#dc2626",
@@ -27,7 +29,7 @@ const STATUS_COLOR = {
 
 const STATUS_EMOJI = {
   "Selected":            "🟢",
-  "Shortlisted":         "🟣",
+  "First Round":         "🟣",
   "Interview Scheduled": "🟡",
   "Applied":             "🔵",
   "Rejected":            "🔴",
@@ -137,14 +139,14 @@ function SectionHeader({ title, sub, badge }) {
 
 function TierBadge({ tier }) {
   const MAP = {
-    "Super Dream": "tier-super-dream",
-    "Dream":       "tier-dream",
-    "Normal":      "tier-normal",
-    "Unplaced":    "tier-unplaced",
+    C:           "tier-super-dream",
+    B:           "tier-dream",
+    A:           "tier-normal",
+    "Unplaced":  "tier-unplaced",
   };
   return (
     <span className={`tier-badge ${MAP[tier] ?? "tier-unplaced"}`}>
-      {tier ?? "Unplaced"}
+      {tier ? (TIER_LABEL[tier] ?? tier) : "Unplaced"}
     </span>
   );
 }
@@ -384,10 +386,10 @@ function Dashboard() {
   // ── Derived ──────────────────────────────────────────────────────────────
 
   const tierPieData = [
-    { name: "Super Dream", value: data.superDreamCount },
-    { name: "Dream",       value: data.dreamCount },
-    { name: "Normal",      value: data.normalCount },
-    { name: "Unplaced",    value: data.unplacedCount },
+    { name: "Tier C",   key: "C", value: data.tierCCount },
+    { name: "Tier B",   key: "B", value: data.tierBCount },
+    { name: "Tier A",   key: "A", value: data.tierACount },
+    { name: "Unplaced", key: "Unplaced", value: data.unplacedCount },
   ].filter((d) => d.value > 0);
 
   const branchBarData = (data.branchWisePlacement ?? []).map((b) => ({
@@ -461,7 +463,7 @@ function Dashboard() {
                   <Pie data={tierPieData} cx="50%" cy="48%"
                     innerRadius={58} outerRadius={95} paddingAngle={3} dataKey="value">
                     {tierPieData.map((e) => (
-                      <Cell key={e.name} fill={TIER_COLORS[e.name] ?? "#94a3b8"} />
+                      <Cell key={e.name} fill={TIER_COLORS[e.key] ?? "#94a3b8"} />
                     ))}
                   </Pie>
                   <Tooltip content={<PieTooltip />} />
@@ -644,10 +646,10 @@ function Dashboard() {
                     <div className="activity-body">
                       <span className="activity-student">{a.studentName}</span>
                       <span className="activity-connector">
-                        {a.status === "Selected"            ? " selected at "    :
-                         a.status === "Shortlisted"         ? " shortlisted at " :
-                         a.status === "Interview Scheduled" ? " interview at "   :
-                         a.status === "Rejected"            ? " rejected at "    :
+                        {a.status === "Selected"            ? " selected at "      :
+                         a.status === "First Round"         ? " cleared first round at " :
+                         a.status === "Interview Scheduled" ? " interview at "     :
+                         a.status === "Rejected"            ? " rejected at "      :
                                                               " applied at "}
                       </span>
                       <span className="activity-company">{a.companyName}</span>
@@ -720,7 +722,7 @@ function Dashboard() {
         <div className="dash-card">
           <SectionHeader
             title="Student Eligibility Snapshot"
-            sub="Super Dream ≥ 8.5 CGPA · Dream ≥ 7.0 CGPA · hover cards for details"
+            sub="Tier C ≥ 8.5 CGPA · Tier B ≥ 7.0 CGPA · hover cards for details"
             badge={activeBadge}
           />
           <div className="stat-grid-4">
@@ -732,14 +734,14 @@ function Dashboard() {
               tooltip="Students whose current active backlog count is zero"
             />
             <StatCard
-              label="Dream Eligible (CGPA ≥ 7.0)"
+              label="Tier B Eligible (CGPA ≥ 7.0)"
               value={data.dreamEligibleStudents}
               accent="#16a34a"
               icon="🌟"
               tooltip="Students with CGPA ≥ 7.0 and no active backlogs"
             />
             <StatCard
-              label="Super Dream (CGPA ≥ 8.5)"
+              label="Tier C Eligible (CGPA ≥ 8.5)"
               value={data.superDreamEligibleStudents}
               accent="#7c3aed"
               icon="🏆"

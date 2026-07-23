@@ -113,7 +113,7 @@ public class DataInitializer implements ApplicationRunner {
             s.setBatchYear(2025);
             s.setCgpa(8.2);
             s.setActiveBacklogs(0);
-            s.setPlacementTier("Dream");
+            s.setPlacementTier("B");
 
             departmentRepository.findAll().stream()
                 .filter(d -> "CSE".equalsIgnoreCase(d.getBranch())

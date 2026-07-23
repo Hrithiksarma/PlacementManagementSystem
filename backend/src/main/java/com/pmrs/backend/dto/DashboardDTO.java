@@ -13,9 +13,9 @@ public class DashboardDTO {
     private double placementPercentage;
 
     // Tier distribution
-    private long superDreamCount;
-    private long dreamCount;
-    private long normalCount;
+    private long tierCCount;
+    private long tierBCount;
+    private long tierACount;
     private long unplacedCount;
 
     // Package analytics
@@ -69,14 +69,14 @@ public class DashboardDTO {
     public double getPlacementPercentage() { return placementPercentage; }
     public void setPlacementPercentage(double placementPercentage) { this.placementPercentage = placementPercentage; }
 
-    public long getSuperDreamCount() { return superDreamCount; }
-    public void setSuperDreamCount(long superDreamCount) { this.superDreamCount = superDreamCount; }
+    public long getTierCCount() { return tierCCount; }
+    public void setTierCCount(long tierCCount) { this.tierCCount = tierCCount; }
 
-    public long getDreamCount() { return dreamCount; }
-    public void setDreamCount(long dreamCount) { this.dreamCount = dreamCount; }
+    public long getTierBCount() { return tierBCount; }
+    public void setTierBCount(long tierBCount) { this.tierBCount = tierBCount; }
 
-    public long getNormalCount() { return normalCount; }
-    public void setNormalCount(long normalCount) { this.normalCount = normalCount; }
+    public long getTierACount() { return tierACount; }
+    public void setTierACount(long tierACount) { this.tierACount = tierACount; }
 
     public long getUnplacedCount() { return unplacedCount; }
     public void setUnplacedCount(long unplacedCount) { this.unplacedCount = unplacedCount; }

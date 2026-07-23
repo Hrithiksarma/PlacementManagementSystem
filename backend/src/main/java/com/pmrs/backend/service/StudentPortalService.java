@@ -23,7 +23,20 @@ public interface StudentPortalService {
 
     void acceptOffer(String username, Integer applicationId);
 
-    void rejectOffer(String username, Integer applicationId);
+    /** @return a message describing the rejection and the resulting penalty */
+    String rejectOffer(String username, Integer applicationId);
+
+    /** @return a message describing the withdrawal and any penalty applied */
+    String withdrawApplication(String username, Integer applicationId);
+
+    /** Decline an already-accepted offer — permanent bar + disciplinary referral. */
+    String declineAcceptedOffer(String username, Integer applicationId);
+
+    /** Penalty the student would incur by withdrawing/declining this application now. */
+    java.util.Map<String, String> previewWithdrawalPenalty(String username, Integer applicationId);
+
+    /** The student's current penalty standing (for banners and enforcement). */
+    com.pmrs.backend.dto.PenaltyStatusDTO getPenaltyStatus(String username);
 
     void applyToDrive(String username, Integer driveId);
 

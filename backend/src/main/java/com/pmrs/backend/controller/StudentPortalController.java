@@ -78,17 +78,56 @@ public class StudentPortalController {
         }
     }
 
-    @Operation(summary = "Reject a released offer — student continues applying")
+    @Operation(summary = "Reject the offer at the Selected stage — carries the same 1-month ban as a final-stage withdrawal")
     @PostMapping("/applications/{appId}/reject-offer")
     public ResponseEntity<Map<String, String>> rejectOffer(@PathVariable Integer appId,
                                                            Authentication auth) {
         try {
-            portalService.rejectOffer(auth.getName(), appId);
-            return ResponseEntity.ok(Map.of("message", "Offer rejected. You can continue applying to other drives."));
+            String message = portalService.rejectOffer(auth.getName(), appId);
+            return ResponseEntity.ok(Map.of("message", message));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("message", e.getMessage()));
         }
+    }
+
+    @Operation(summary = "Withdraw from a drive mid-process — applies the stage-based penalty")
+    @PostMapping("/applications/{appId}/withdraw")
+    public ResponseEntity<Map<String, String>> withdrawApplication(@PathVariable Integer appId,
+                                                                   Authentication auth) {
+        try {
+            String message = portalService.withdrawApplication(auth.getName(), appId);
+            return ResponseEntity.ok(Map.of("message", message));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Decline an already-accepted offer — permanent bar + disciplinary referral")
+    @PostMapping("/applications/{appId}/decline-offer")
+    public ResponseEntity<Map<String, String>> declineAcceptedOffer(@PathVariable Integer appId,
+                                                                    Authentication auth) {
+        try {
+            String message = portalService.declineAcceptedOffer(auth.getName(), appId);
+            return ResponseEntity.ok(Map.of("message", message));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Preview the exact penalty withdrawing/declining this application would incur")
+    @GetMapping("/applications/{appId}/withdrawal-penalty-preview")
+    public Map<String, String> previewWithdrawalPenalty(@PathVariable Integer appId,
+                                                        Authentication auth) {
+        return portalService.previewWithdrawalPenalty(auth.getName(), appId);
+    }
+
+    @Operation(summary = "Get the student's current penalty standing (bans, skip counters, referral flag)")
+    @GetMapping("/penalty-status")
+    public com.pmrs.backend.dto.PenaltyStatusDTO getPenaltyStatus(Authentication auth) {
+        return portalService.getPenaltyStatus(auth.getName());
     }
 
     @Operation(summary = "Apply to a drive")

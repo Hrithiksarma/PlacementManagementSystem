@@ -355,7 +355,7 @@
   .ps-ts-connector { margin-top: 15px; }
 }
 
-/* ── Pending offer card (Offer Released, awaiting student decision) ──────── */
+/* ── Pending offer card (Selected, awaiting student decision) ──────────── */
 
 .ps-pending-offer-card {
   background: linear-gradient(135deg, #fffbeb, #fef9c3);

@@ -1,9 +1,10 @@
 package com.pmrs.backend.service;
 
-import com.pmrs.backend.dto.AcademicStudentDTO;
 import com.pmrs.backend.dto.BackfillResultDTO;
+import com.pmrs.backend.entity.Department;
 import com.pmrs.backend.entity.Role;
 import com.pmrs.backend.entity.Student;
+import com.pmrs.backend.entity.StudentFormSubmission;
 import com.pmrs.backend.entity.User;
 import com.pmrs.backend.exception.ResourceNotFoundException;
 import com.pmrs.backend.repository.DepartmentRepository;
@@ -18,25 +19,29 @@ import java.util.List;
 @Service
 public class StudentServiceImpl implements StudentService {
 
+    // Institute roll numbers are exactly 7 digits (e.g. 2521512) — no letters.
+    private static final java.util.regex.Pattern ROLL_NO_PATTERN =
+            java.util.regex.Pattern.compile("^[0-9]{7}$");
+
     private final StudentRepository    studentRepository;
     private final DepartmentRepository departmentRepository;
     private final RollNumberService    rollNumberService;
-    private final AcademicErpClient    academicErpClient;
     private final UserRepository       userRepository;
     private final PasswordEncoder      passwordEncoder;
+    private final WelcomeEmailService  welcomeEmailService;
 
     public StudentServiceImpl(StudentRepository    studentRepository,
                                DepartmentRepository departmentRepository,
                                RollNumberService    rollNumberService,
-                               AcademicErpClient    academicErpClient,
                                UserRepository       userRepository,
-                               PasswordEncoder      passwordEncoder) {
+                               PasswordEncoder      passwordEncoder,
+                               WelcomeEmailService  welcomeEmailService) {
         this.studentRepository    = studentRepository;
         this.departmentRepository = departmentRepository;
         this.rollNumberService    = rollNumberService;
-        this.academicErpClient    = academicErpClient;
         this.userRepository       = userRepository;
         this.passwordEncoder      = passwordEncoder;
+        this.welcomeEmailService  = welcomeEmailService;
     }
 
     @Override
@@ -113,39 +118,83 @@ public class StudentServiceImpl implements StudentService {
         );
     }
 
+    /**
+     * Promotes a staged Google-Form student submission into a real Student.
+     * Validation failures throw {@link IllegalArgumentException} with a clear
+     * message so the bulk-import caller can record it as this row's failure
+     * reason without aborting the whole batch.
+     */
     @Override
     @Transactional
-    public Student importStudent(String rollNo) {
-        // Reject if already imported
+    public Student importFromSubmission(StudentFormSubmission submission) {
+        String name    = trimToNull(submission.getFullName());
+        String email   = trimToNull(submission.getEmail());
+        String phone   = trimToNull(submission.getPhone());
+        String program = trimToNull(submission.getProgram());
+        String branch  = trimToNull(submission.getBranch());
+        String rollNo  = submission.getRollNo() == null ? "" : submission.getRollNo().trim();
+
+        if (name == null)    throw new IllegalArgumentException("Full name is missing.");
+        if (email == null)   throw new IllegalArgumentException("Email is missing.");
+        if (phone == null)   throw new IllegalArgumentException("Phone is missing.");
+        if (program == null) throw new IllegalArgumentException("Program is missing.");
+        if (branch == null)  throw new IllegalArgumentException("Branch/department is missing.");
+        if (submission.getBatchYear() == null)
+            throw new IllegalArgumentException("Batch year is missing or not a number.");
+
+        // Roll number now comes straight from the student's form answer.
+        if (rollNo.isEmpty()) {
+            throw new IllegalArgumentException(
+                "No roll number was submitted — ask the student to resubmit the form.");
+        }
+        if (!ROLL_NO_PATTERN.matcher(rollNo).matches()) {
+            throw new IllegalArgumentException(
+                "Roll number '" + rollNo + "' must be exactly 7 digits (no letters) — check the form response for typos.");
+        }
         if (studentRepository.existsByRollNo(rollNo)) {
             throw new IllegalArgumentException(
-                "Student with roll number " + rollNo + " is already in PRMS.");
+                "Roll number " + rollNo + " is already in PRMS — this student may be a duplicate submission.");
         }
 
-        // Fetch from Academic ERP
-        AcademicStudentDTO academic = academicErpClient.fetchByRollNo(rollNo);
+        if (studentRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException(
+                "A student with email " + email + " already exists in PRMS.");
+        }
 
-        // Map to PRMS Student entity
+        // A branch+program spans multiple sections; assign the first section
+        // (an officer can move the student to another section afterward).
+        List<Department> matches =
+                departmentRepository.findByBranchAndProgramOrderByDeptIdAsc(branch, program);
+        if (matches.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "No department matches branch '" + branch + "' and program '" + program + "'.");
+        }
+        Department department = matches.get(0);
+
         Student student = new Student();
-        student.setRollNo(academic.getRollNo());
-        student.setName(academic.buildFullName());
-        student.setEmail(academic.getEmail());
-        student.setPhone(academic.getPhone());
-        student.setBatchYear(academic.getAdmissionYear());
-        student.setCgpa(academic.getCgpa());
-        student.setActiveBacklogs(academic.getActiveBacklogs());
-        student.setPlacementTier("Unplaced");    // always starts Unplaced
-
-        if (academic.getDepartment() != null) {
-            departmentRepository.findById(academic.getDepartment().getDeptId())
-                .ifPresent(student::setDepartment);
-        }
+        student.setName(name);
+        student.setEmail(email);
+        student.setPhone(phone);
+        student.setDepartment(department);
+        student.setBatchYear(submission.getBatchYear());
+        student.setCgpa(submission.getCgpa());
+        student.setActiveBacklogs(
+                submission.getActiveBacklogs() != null ? submission.getActiveBacklogs() : 0);
+        student.setResumeUrl(submission.getResumeUrl());
+        student.setPhotoUrl(submission.getPhotoUrl());
+        student.setGradeSheetUrl(submission.getGradeSheetUrl());
+        student.setPlacementTier("Unplaced");   // always starts Unplaced
+        student.setRollNo(rollNo);              // exactly as the student typed it
 
         Student saved = studentRepository.save(student);
-
         createStudentAccountIfMissing(saved);
-
         return saved;
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) return null;
+        String t = value.trim();
+        return t.isEmpty() ? null : t;
     }
 
     /**
@@ -153,8 +202,12 @@ public class StudentServiceImpl implements StudentService {
      * temporary password are both the roll number — it's unique, stable, and
      * already known to the student. mustChangePassword forces them to set a
      * real password on first login (enforced both client-side and server-side).
+     *
+     * <p>Package-private so the Google-Form student-import flow
+     * ({@code StudentFormServiceImpl}) can reuse the exact same account-creation
+     * logic after it saves a form-imported student.
      */
-    private void createStudentAccountIfMissing(Student student) {
+    void createStudentAccountIfMissing(Student student) {
         if (userRepository.existsByStudentId(student.getStudentId())) {
             return;
         }
@@ -170,6 +223,10 @@ public class StudentServiceImpl implements StudentService {
         user.setStudentId(student.getStudentId());
         user.setMustChangePassword(true);
         userRepository.save(user);
+
+        // First (and only) time an account is created for this student — welcome them.
+        welcomeEmailService.sendWelcomeEmail(
+                student.getEmail(), student.getName(), student.getRollNo());
     }
 
     @Override

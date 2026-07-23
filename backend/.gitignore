@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+# Google service account credentials
+src/main/resources/google-service-account.json
+
+# Local secrets — never commit
+.env

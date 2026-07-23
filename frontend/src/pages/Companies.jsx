@@ -1,11 +1,31 @@
 import { useState } from "react";
 import Layout from "../components/Layout";
 import { getAllCompanies, addCompany, updateCompany, deleteCompany } from "../services/companyService";
+import { getAllHRContacts } from "../services/hrContactService";
 import { isAdmin } from "../services/authService";
 import "./Companies.css";
 
-const TIERS = ["All", "Super Dream", "Dream", "Normal"];
+const TIERS = ["All", "A", "B", "C"];
 const SECTORS = ["All", "IT", "Finance", "Fintech", "Consulting", "Core", "Analytics"];
+
+// Job categories by CTC: A < 6 LPA · B 6–11.99 LPA · C ≥ 12 LPA
+const tierLabelFor = (t) => (t === "All" ? "All Tiers" : t ? `Tier ${t}` : t);
+
+function HRContactsCell({ contacts }) {
+  if (!contacts || contacts.length === 0) {
+    return <span className="text-muted">—</span>;
+  }
+  return (
+    <div className="d-flex flex-column gap-1">
+      {contacts.map((hr) => (
+        <div key={hr.hrId} style={{ fontSize: "0.85rem" }}>
+          <div className="fw-semibold">{hr.hrName}</div>
+          <div className="text-muted">{hr.hrPhone}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const emptyForm = {
   companyName: "",
@@ -16,6 +36,7 @@ const emptyForm = {
 
 function Companies() {
   const [allCompanies, setAllCompanies] = useState([]);
+  const [hrContactsByCompany, setHrContactsByCompany] = useState({});
   const [hasSearched, setHasSearched] = useState(false);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({ tier: "All", sector: "All" });
@@ -27,8 +48,20 @@ function Companies() {
 
   const handleSearch = async () => {
     try {
-      const res = await getAllCompanies();
-      setAllCompanies(res.data);
+      const [companiesRes, hrContactsRes] = await Promise.all([
+        getAllCompanies(),
+        getAllHRContacts(),
+      ]);
+      setAllCompanies(companiesRes.data);
+
+      const byCompany = {};
+      for (const hr of hrContactsRes.data) {
+        const companyId = hr.company?.companyId;
+        if (!companyId) continue;
+        (byCompany[companyId] ??= []).push(hr);
+      }
+      setHrContactsByCompany(byCompany);
+
       setHasSearched(true);
     } catch (err) {
       console.error("Error loading companies:", err);
@@ -86,7 +119,7 @@ function Companies() {
     .filter((c) => filters.sector === "All" || c.sector === filters.sector)
     .filter((c) => c.companyName.toLowerCase().includes(search.toLowerCase()));
 
-  const tierLabel   = filters.tier   === "All" ? "All Tiers"   : filters.tier;
+  const tierLabel   = tierLabelFor(filters.tier);
   const sectorLabel = filters.sector === "All" ? "All Sectors" : filters.sector;
 
   return (
@@ -116,7 +149,7 @@ function Companies() {
                 onChange={(e) => setFilters({ ...filters, tier: e.target.value })}
               >
                 {TIERS.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>{tierLabelFor(t)}</option>
                 ))}
               </select>
             </div>
@@ -164,7 +197,7 @@ function Companies() {
                 <select className="form-select" {...field("tier")}>
                   <option value="">Select tier</option>
                   {TIERS.filter((t) => t !== "All").map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                    <option key={t} value={t}>{tierLabelFor(t)}</option>
                   ))}
                 </select>
               </div>
@@ -215,6 +248,7 @@ function Companies() {
                   <th>Sector</th>
                   <th>Tier</th>
                   <th>Website</th>
+                  <th>HR Contact</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -224,8 +258,11 @@ function Companies() {
                     <td>{company.companyId}</td>
                     <td>{company.companyName}</td>
                     <td>{company.sector}</td>
-                    <td>{company.tier}</td>
+                    <td>{tierLabelFor(company.tier)}</td>
                     <td>{company.website}</td>
+                    <td>
+                      <HRContactsCell contacts={hrContactsByCompany[company.companyId]} />
+                    </td>
                     <td>
                       <button
                         className="btn btn-sm action-edit me-2"

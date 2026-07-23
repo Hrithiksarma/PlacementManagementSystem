@@ -13,11 +13,5 @@ export const deleteStudent = (id) => axios.delete(`${API_URL}/${id}`);
 export const getFilteredStudents = (department, program, batchYear) =>
   axios.get(`${API_URL}/filter`, { params: { department, program, batchYear } });
 
-export const previewStudent = (rollNo) =>
-  axios.get(`${API_URL}/preview/${rollNo}`);
-
-export const importStudent = (rollNo) =>
-  axios.post(`${API_URL}/import/${rollNo}`);
-
 export const backfillStudentAccounts = () =>
   axios.post(`${API_URL}/backfill-accounts`);

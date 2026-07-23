@@ -12,7 +12,7 @@ public class StudentProfileDTO {
     private Integer batchYear;
     private Double  cgpa;
     private Integer activeBacklogs;
-    private String  placementTier;    // Actual placement outcome: Unplaced / Normal / Dream / Super Dream
+    private String  placementTier;    // Actual placement outcome: Unplaced / A / B / C
     private String  placementStatus;  // "Placed" | "Not Placed"
 
     public StudentProfileDTO() {}

@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { logout, getUsername, getRole } from "../services/authService";
+import { getStudentProfile } from "../services/studentPortalService";
 
 const ROLE_LABEL = {
   ADMIN:              "Admin",
@@ -15,6 +17,30 @@ const ROLE_COLOR = {
 function Navbar() {
   const username = getUsername();
   const role     = getRole();
+
+  // Students log in with their roll number as username — show their real name
+  // instead. Admins/officers keep showing their login username.
+  const [displayName, setDisplayName] = useState(() =>
+    role === "STUDENT" ? (localStorage.getItem("displayName") || username) : username
+  );
+
+  useEffect(() => {
+    if (role !== "STUDENT") {
+      setDisplayName(username);
+      return;
+    }
+    let cancelled = false;
+    getStudentProfile()
+      .then((res) => {
+        const name = res.data?.name;
+        if (name && !cancelled) {
+          setDisplayName(name);
+          localStorage.setItem("displayName", name);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [role, username]);
 
   return (
     <nav className="navbar navbar-dark bg-dark px-3" style={{ minHeight: 52 }}>
@@ -34,11 +60,11 @@ function Navbar() {
                 flexShrink: 0,
               }}
             >
-              {username.charAt(0).toUpperCase()}
+              {(displayName || username).charAt(0).toUpperCase()}
             </span>
             <div style={{ lineHeight: 1.2 }}>
               <div style={{ fontSize: "0.82rem", color: "#f1f5f9", fontWeight: 600 }}>
-                {username}
+                {displayName || username}
               </div>
               <div style={{ fontSize: "0.68rem", color: "#94a3b8" }}>
                 {ROLE_LABEL[role] ?? role}

@@ -3,14 +3,15 @@ import Layout from "../components/Layout";
 import {
   deleteStudent,
   getFilteredStudents,
-  previewStudent,
-  importStudent,
   backfillStudentAccounts,
 } from "../services/studentService";
 import { isAdmin } from "../services/authService";
 import "./Students.css";
 
 const PROGRAMS = ["B.Tech", "M.Tech", "PhD"];
+
+// Job categories by CTC: A < 6 LPA · B 6–11.99 LPA · C ≥ 12 LPA
+const tierLabelFor = (t) => (t && t !== "Unplaced" ? `Tier ${t}` : (t ?? "—"));
 
 const DEPT_BY_PROGRAM = {
   "B.Tech": ["CSE", "ECE"],
@@ -20,6 +21,115 @@ const DEPT_BY_PROGRAM = {
 const BATCH_YEARS = [];
 for (let y = 2015; y <= 2030; y++) BATCH_YEARS.push(y);
 
+// Google Drive share URLs look like .../file/d/<ID>/view or ...?id=<ID>.
+// Pull the file ID out so we can embed a preview iframe.
+function driveFileId(url) {
+  if (!url) return null;
+  const byPath = url.match(/\/d\/([-\w]{25,})/);
+  if (byPath) return byPath[1];
+  const byQuery = url.match(/[?&]id=([-\w]{25,})/);
+  if (byQuery) return byQuery[1];
+  const loose = url.match(/[-\w]{25,}/);
+  return loose ? loose[0] : null;
+}
+
+function DocBlock({ label, url }) {
+  const fileId = driveFileId(url);
+  return (
+    <div className="mb-3">
+      <div className="d-flex align-items-center gap-2 mb-1">
+        <span className="fw-semibold">{label}</span>
+        {url ? (
+          <a href={url} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary py-0">
+            Open in new tab ↗
+          </a>
+        ) : (
+          <span className="text-muted" style={{ fontSize: "0.85rem" }}>Not provided</span>
+        )}
+      </div>
+      {url && fileId && (
+        <div style={{ height: 360, border: "1px solid #e2e8f0", borderRadius: 8, overflow: "hidden" }}>
+          <iframe
+            title={`${label} preview`}
+            src={`https://drive.google.com/file/d/${fileId}/preview`}
+            width="100%"
+            height="100%"
+            style={{ border: "none" }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StudentDetailsModal({ student, onClose }) {
+  if (!student) return null;
+  const field = (label, value) => (
+    <div className="col-md-6 mb-2">
+      <div className="text-muted" style={{ fontSize: "0.75rem" }}>{label}</div>
+      <div className="fw-semibold">{value ?? "—"}</div>
+    </div>
+  );
+
+  return (
+    <div
+      style={{
+        position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)",
+        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1050,
+        padding: 16,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: "#fff", borderRadius: 12, padding: "22px 24px",
+          width: "min(720px, 96vw)", maxHeight: "92vh", overflowY: "auto",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.3)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h5 className="mb-0">{student.name}</h5>
+            <div className="text-muted" style={{ fontFamily: "monospace", fontSize: "0.85rem" }}>
+              {student.rollNo ?? "—"}
+            </div>
+          </div>
+          <button className="btn-close" onClick={onClose} aria-label="Close" />
+        </div>
+
+        <div className="row g-1">
+          {field("Email", student.email)}
+          {field("Phone", student.phone)}
+          {field("Department", student.department?.deptName)}
+          {field("Program / Branch",
+            student.department
+              ? `${student.department.program ?? "—"} · ${student.department.branch ?? "—"}`
+              : "—")}
+          {field("Batch Year", student.batchYear)}
+          {field("CGPA", student.cgpa)}
+          {field("Active Backlogs", student.activeBacklogs)}
+          {field("Placement Tier", tierLabelFor(student.placementTier))}
+        </div>
+
+        <hr />
+
+        {/* Documents */}
+        <div className="mb-2 fw-semibold">Documents</div>
+        {!student.resumeUrl && !student.photoUrl && !student.gradeSheetUrl ? (
+          <div className="text-muted">No documents on file (manually-added student).</div>
+        ) : (
+          <>
+            <DocBlock label="Resume"     url={student.resumeUrl} />
+            <DocBlock label="Photo"      url={student.photoUrl} />
+            <DocBlock label="Grade Card" url={student.gradeSheetUrl} />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Students() {
   const [students, setStudents] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -28,15 +138,10 @@ function Students() {
     program: "B.Tech",
     batchYear: 2025,
   });
-  const [showImport, setShowImport]       = useState(false);
-  const [importRollNo, setImportRollNo]   = useState("");
-  const [importPreview, setImportPreview] = useState(null);
-  const [importLoading, setImportLoading] = useState(false);
-  const [importError, setImportError]     = useState(null);
-
   const [backfillLoading, setBackfillLoading] = useState(false);
   const [backfillResult, setBackfillResult]   = useState(null);
   const [backfillError, setBackfillError]     = useState(null);
+  const [detailsStudent, setDetailsStudent]   = useState(null);
 
   const admin = isAdmin();
 
@@ -66,23 +171,6 @@ function Students() {
     }
   };
 
-  const handlePreview = async () => {
-    if (!importRollNo.trim()) return;
-    setImportLoading(true);
-    setImportError(null);
-    setImportPreview(null);
-    try {
-      const res = await previewStudent(importRollNo.trim());
-      setImportPreview(res.data);
-    } catch (err) {
-      setImportError(
-        err.response?.data?.message ?? "Roll number not found in Academic ERP."
-      );
-    } finally {
-      setImportLoading(false);
-    }
-  };
-
   const handleBackfill = async () => {
     setBackfillLoading(true);
     setBackfillError(null);
@@ -99,26 +187,6 @@ function Students() {
     }
   };
 
-  const handleImport = async () => {
-    if (!importPreview) return;
-    setImportLoading(true);
-    setImportError(null);
-    try {
-      await importStudent(importRollNo.trim());
-      alert(`Student ${importPreview.firstName} ${importPreview.lastName} imported successfully.`);
-      setShowImport(false);
-      setImportRollNo("");
-      setImportPreview(null);
-      if (hasSearched) handleSearch();
-    } catch (err) {
-      setImportError(
-        err.response?.data?.message ?? "Import failed. Student may already exist in PRMS."
-      );
-    } finally {
-      setImportLoading(false);
-    }
-  };
-
   return (
     <Layout>
       {admin && (
@@ -129,16 +197,8 @@ function Students() {
               className="text-muted d-flex align-items-center gap-1"
               style={{ fontSize: "0.82rem" }}
             >
-              🎓 New students are registered in Academic ERP
+              🎓 Students register through the Google Form (Forms → Students)
             </span>
-            <a
-              href="http://localhost:5174"
-              target="_blank"
-              rel="noreferrer"
-              className="btn btn-outline-secondary btn-sm"
-            >
-              Open Academic ERP ↗
-            </a>
             <button
               className="btn btn-outline-secondary btn-sm"
               onClick={handleBackfill}
@@ -146,17 +206,6 @@ function Students() {
               title="Create login accounts (username & temp password = roll number) for any student that doesn't have one yet"
             >
               {backfillLoading ? "Creating logins…" : "Create Missing Logins"}
-            </button>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                setShowImport(!showImport);
-                setImportRollNo("");
-                setImportPreview(null);
-                setImportError(null);
-              }}
-            >
-              {showImport ? "Cancel Import" : "Import Student"}
             </button>
           </div>
         </div>
@@ -179,107 +228,6 @@ function Students() {
               Students will be prompted to set a new password on first login.
             </>
           )}
-        </div>
-      )}
-
-      {admin && showImport && (
-        <div className="card mb-4 border-primary">
-          <div className="card-header bg-primary text-white fw-semibold">
-            Import Student from Academic ERP
-          </div>
-          <div className="card-body">
-
-            {/* Roll number input */}
-            <div className="d-flex gap-2 align-items-end mb-3">
-              <div style={{ flex: 1 }}>
-                <label className="form-label fw-semibold">Roll Number</label>
-                <input
-                  className="form-control"
-                  placeholder="e.g. 2511104"
-                  value={importRollNo}
-                  onChange={(e) => {
-                    setImportRollNo(e.target.value);
-                    setImportPreview(null);
-                    setImportError(null);
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && handlePreview()}
-                  maxLength={7}
-                />
-              </div>
-              <button
-                className="btn btn-outline-primary"
-                onClick={handlePreview}
-                disabled={importLoading || !importRollNo.trim()}
-              >
-                {importLoading && !importPreview ? "Searching…" : "Look Up"}
-              </button>
-            </div>
-
-            {/* Error */}
-            {importError && (
-              <div className="alert alert-danger py-2">{importError}</div>
-            )}
-
-            {/* Preview card */}
-            {importPreview && (
-              <div className="card bg-light mb-3">
-                <div className="card-body">
-                  <h6 className="card-title mb-3">
-                    {importPreview.firstName}{" "}
-                    {importPreview.middleName ? importPreview.middleName + " " : ""}
-                    {importPreview.lastName}
-                  </h6>
-                  <div className="row g-2" style={{ fontSize: "0.88rem" }}>
-                    <div className="col-md-4">
-                      <span className="text-muted">Roll No</span>
-                      <div className="fw-semibold" style={{ fontFamily: "monospace" }}>
-                        {importPreview.rollNo}
-                      </div>
-                    </div>
-                    <div className="col-md-4">
-                      <span className="text-muted">Email</span>
-                      <div>{importPreview.email}</div>
-                    </div>
-                    <div className="col-md-4">
-                      <span className="text-muted">Phone</span>
-                      <div>{importPreview.phone}</div>
-                    </div>
-                    <div className="col-md-4">
-                      <span className="text-muted">Department</span>
-                      <div>{importPreview.department?.deptName ?? "—"}</div>
-                    </div>
-                    <div className="col-md-4">
-                      <span className="text-muted">Program</span>
-                      <div>{importPreview.department?.program} · {importPreview.department?.branch}</div>
-                    </div>
-                    <div className="col-md-4">
-                      <span className="text-muted">Admission Year</span>
-                      <div>{importPreview.admissionYear}</div>
-                    </div>
-                    <div className="col-md-4">
-                      <span className="text-muted">CGPA</span>
-                      <div>{importPreview.cgpa}</div>
-                    </div>
-                    <div className="col-md-4">
-                      <span className="text-muted">Backlogs</span>
-                      <div>{importPreview.activeBacklogs}</div>
-                    </div>
-                    <div className="col-md-4">
-                      <span className="text-muted">Placement tier</span>
-                      <div className="text-muted fst-italic">Unplaced (set after import)</div>
-                    </div>
-                  </div>
-                  <button
-                    className="btn btn-success mt-3"
-                    onClick={handleImport}
-                    disabled={importLoading}
-                  >
-                    {importLoading ? "Importing…" : "Confirm Import"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       )}
 
@@ -386,19 +334,21 @@ function Students() {
                     <td>{student.activeBacklogs}</td>
                     <td>{student.phone}</td>
                     <td>{student.email}</td>
-                    <td>{student.placementTier}</td>
+                    <td>{tierLabelFor(student.placementTier)}</td>
                     <td>
-                      {admin ? (
+                      <button
+                        className="btn btn-sm btn-outline-secondary me-2"
+                        onClick={() => setDetailsStudent(student)}
+                      >
+                        More Details
+                      </button>
+                      {admin && (
                         <button
                           className="btn btn-sm action-delete"
                           onClick={() => handleDelete(student.studentId)}
                         >
                           Delete
                         </button>
-                      ) : (
-                        <span className="text-muted" style={{ fontSize: "0.78rem" }}>
-                          View Only
-                        </span>
                       )}
                     </td>
                   </tr>
@@ -408,6 +358,11 @@ function Students() {
           </table>
         </>
       )}
+
+      <StudentDetailsModal
+        student={detailsStudent}
+        onClose={() => setDetailsStudent(null)}
+      />
     </Layout>
   );
 }

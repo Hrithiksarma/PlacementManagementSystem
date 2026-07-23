@@ -8,6 +8,8 @@ const ALL_ITEMS = [
   { path: "/admin/companies",    label: "Companies",    icon: "🏢", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/drives",       label: "Drives",       icon: "📋", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/applications", label: "Applications", icon: "📄", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/forms",        label: "Forms",        icon: "📝", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/penalties",    label: "Penalties",    icon: "⚖️", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/officers",     label: "Officers",      icon: "🛡️", roles: ["ADMIN"] },
 
   // ── Student portal ─────────────────────────────────────────────────────────

@@ -12,6 +12,8 @@ import Login          from "./pages/Login";
 import AccessDenied   from "./pages/AccessDenied";
 import ChangePassword from "./pages/ChangePassword";
 import ManageOfficers from "./pages/ManageOfficers";
+import FormSubmissions from "./pages/FormSubmissions";
+import Penalties       from "./pages/Penalties";
 
 import StudentDashboard from "./pages/student/StudentDashboard";
 import MyProfile        from "./pages/student/MyProfile";
@@ -74,6 +76,12 @@ function App() {
         } />
         <Route path="/admin/applications" element={
           <AdminRoute><Applications /></AdminRoute>
+        } />
+        <Route path="/admin/forms" element={
+          <AdminRoute><FormSubmissions /></AdminRoute>
+        } />
+        <Route path="/admin/penalties" element={
+          <AdminRoute><Penalties /></AdminRoute>
         } />
         <Route path="/admin/officers" element={
           <SuperAdminRoute><ManageOfficers /></SuperAdminRoute>

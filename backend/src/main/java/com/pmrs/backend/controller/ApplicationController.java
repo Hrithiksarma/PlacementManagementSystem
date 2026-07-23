@@ -3,13 +3,14 @@ package com.pmrs.backend.controller;
 import com.pmrs.backend.dto.StatusUpdateRequest;
 import com.pmrs.backend.entity.Application;
 import com.pmrs.backend.service.ApplicationService;
+import com.pmrs.backend.service.SelectionEmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Application APIs", description = "Operations related to placement applications")
 @RestController
@@ -18,9 +19,12 @@ import java.util.List;
 public class ApplicationController {
 
     private final ApplicationService applicationService;
+    private final SelectionEmailService selectionEmailService;
 
-    public ApplicationController(ApplicationService applicationService) {
+    public ApplicationController(ApplicationService applicationService,
+                                 SelectionEmailService selectionEmailService) {
         this.applicationService = applicationService;
+        this.selectionEmailService = selectionEmailService;
     }
 
     @Operation(summary = "Get all applications")
@@ -78,6 +82,18 @@ public class ApplicationController {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(applicationService.updateStatus(id, req.getStatus()));
+    }
+
+    @Operation(summary = "Resend the selection congratulations email")
+    @PostMapping("/{id}/resend-selection-email")
+    public ResponseEntity<?> resendSelectionEmail(@PathVariable Integer id) {
+        Application app = applicationService.getApplicationById(id);
+        if (!"Selected".equals(app.getStatus())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Application is not Selected."));
+        }
+        selectionEmailService.sendSelectionEmail(app);
+        return ResponseEntity.ok(Map.of("message", "Email queued for resend."));
     }
 
     @Operation(summary = "Delete application by ID")

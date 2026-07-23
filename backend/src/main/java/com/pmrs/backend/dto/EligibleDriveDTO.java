@@ -18,6 +18,7 @@ public class EligibleDriveDTO {
     private boolean    alreadyApplied;
     private boolean    eligible = true;
     private String     eligibilityReason;
+    private boolean    upgradationBlocked;
 
     public EligibleDriveDTO() {}
 
@@ -59,4 +60,7 @@ public class EligibleDriveDTO {
 
     public String     getEligibilityReason()              { return eligibilityReason; }
     public void       setEligibilityReason(String v)      { this.eligibilityReason = v; }
+
+    public boolean    isUpgradationBlocked()               { return upgradationBlocked; }
+    public void       setUpgradationBlocked(boolean v)     { this.upgradationBlocked = v; }
 }

@@ -147,7 +147,7 @@
   box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);
 }
 
-/* ── Offer banner (inside card when Offer Released) ──────────────────────── */
+/* ── Offer banner (inside card when Selected — job offer stage) ──────────── */
 
 .ma-offer-banner {
   display: flex;
@@ -223,7 +223,7 @@
   align-items: flex-start;
   gap: 0;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 6px 4px 4px;
 }
 
 .ma-timeline-step {
@@ -232,48 +232,54 @@
   align-items: center;
   position: relative;
   flex-shrink: 0;
+  width: 116px;
 }
 
 .ma-step-dot {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  z-index: 1;
+  z-index: 2;
   flex-shrink: 0;
 }
 
 .ma-dot-done    { background: #16a34a; color: #fff; }
-.ma-dot-active  { background: #2563eb; color: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
+.ma-dot-active  { background: #2563eb; color: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,0.2); }
 .ma-dot-future  { background: #f1f5f9; color: #94a3b8; border: 2px solid #e2e8f0; }
 .ma-dot-rejected{ background: #dc2626; color: #fff; }
 
+/* Taken out of normal flow so it can't push/overlap the label below it —
+   it just draws a bar across the dot's vertical center, from this step's
+   center to the next step's center (step width is fixed, so this lines up
+   exactly with the next dot). */
 .ma-step-line {
-  height: 3px;
-  width: 60px;
-  margin-top: -16px;
-  position: relative;
-  z-index: 0;
-  align-self: center;
-  flex-shrink: 0;
+  height: 4px;
+  width: 100%;
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  z-index: 1;
 }
 
 .ma-line-done   { background: #16a34a; }
 .ma-line-future { background: #e2e8f0; }
 
 .ma-step-label {
-  font-size: 0.62rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: #64748b;
   text-align: center;
-  margin-top: 5px;
-  max-width: 80px;
-  line-height: 1.3;
-  white-space: nowrap;
+  margin-top: 10px;
+  width: 100%;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .ma-label-active   { color: #1d4ed8; font-weight: 800; }

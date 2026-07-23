@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import Layout from "../../components/Layout";
-import { getEligibleDrives, applyToDrive } from "../../services/studentPortalService";
+import { getEligibleDrives, applyToDrive, getPenaltyStatus } from "../../services/studentPortalService";
 import "./EligibleDrives.css";
 
 const TIER_COLOR = {
-  "Super Dream": "#7c3aed",
-  "Dream":       "#16a34a",
-  "Normal":      "#2563eb",
+  C: "#7c3aed",
+  B: "#16a34a",
+  A: "#2563eb",
 };
+
+const TIER_LABEL = { A: "Tier A", B: "Tier B", C: "Tier C" };
 
 const DRIVE_STATUS_BADGE = {
   "Upcoming":  { bg: "#eff6ff", color: "#1d4ed8" },
@@ -19,7 +21,7 @@ function TierBadge({ tier }) {
   const color = TIER_COLOR[tier] ?? "#374151";
   return (
     <span className="ed-tier" style={{ background: color }}>
-      {tier ?? "—"}
+      {tier ? (TIER_LABEL[tier] ?? tier) : "—"}
     </span>
   );
 }
@@ -43,11 +45,16 @@ function EligibleDrives() {
   const [filterTier,  setFilterTier]  = useState("All");
   const [filterStatus,setFilterStatus]= useState("All");
 
+  const [penalty, setPenalty] = useState(null);
+
   const loadDrives = () => {
     setLoading(true);
     getEligibleDrives()
       .then((res) => { setDrives(res.data); setLoading(false); })
       .catch(() => { setError("Failed to load drives."); setLoading(false); });
+    getPenaltyStatus()
+      .then((res) => setPenalty(res.data))
+      .catch(() => {});
   };
 
   useEffect(() => { loadDrives(); }, []);
@@ -83,9 +90,15 @@ function EligibleDrives() {
     .filter((d) => filterTier   === "All" || d.companyTier  === filterTier)
     .filter((d) => filterStatus === "All" || d.driveStatus  === filterStatus);
 
-  const openCount       = filtered.filter((d) => (d.eligible ?? true) && !d.alreadyApplied && d.driveStatus !== "Completed").length;
+  // Hard-blocked = academic (CGPA/backlog) miss or an active penalty bar —
+  // the card is disabled and shows its reason up front. A drive blocked only
+  // by the one-time upgradation policy stays fully clickable; the policy
+  // explanation surfaces as a toast if/when the apply attempt is rejected.
+  const isHardBlocked = (d) => d.eligible === false && !d.upgradationBlocked;
+
+  const openCount       = filtered.filter((d) => !isHardBlocked(d) && !d.alreadyApplied && d.driveStatus !== "Completed").length;
   const appliedCount    = filtered.filter((d) => d.alreadyApplied).length;
-  const ineligibleCount = filtered.filter((d) => d.eligible === false && !d.alreadyApplied).length;
+  const ineligibleCount = filtered.filter((d) => isHardBlocked(d) && !d.alreadyApplied).length;
 
   const formatDate = (ds) => ds
     ? new Date(ds).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
@@ -118,6 +131,14 @@ function EligibleDrives() {
           </div>
         )}
 
+        {/* ── Active penalty banner ──────────────────────────────────── */}
+        {penalty?.barred && (
+          <div className="alert alert-warning d-flex align-items-center py-2 mb-3">
+            <span className="me-2">⚠️</span>
+            <span className="flex-grow-1">{penalty.message}</span>
+          </div>
+        )}
+
         {/* ── Header ─────────────────────────────────────────────────── */}
         <div className="ed-page-header">
           <div>
@@ -141,7 +162,7 @@ function EligibleDrives() {
             <label className="ed-filter-label">Tier</label>
             <select className="ed-filter-select" value={filterTier}
               onChange={(e) => setFilterTier(e.target.value)}>
-              {tiers.map((t) => <option key={t} value={t}>{t}</option>)}
+              {tiers.map((t) => <option key={t} value={t}>{t === "All" ? t : (TIER_LABEL[t] ?? t)}</option>)}
             </select>
           </div>
           <div className="ed-filter-group">
@@ -169,11 +190,11 @@ function EligibleDrives() {
           <div className="ed-cards">
             {filtered.map((d) => {
               const isCompleted = d.driveStatus === "Completed";
-              const isEligible  = d.eligible ?? true;
+              const blocked     = isHardBlocked(d);
 
               return (
                 <div key={d.driveId}
-                  className={`ed-card${d.alreadyApplied ? " ed-card-applied" : ""}${(!isEligible && !d.alreadyApplied) ? " ed-card-ineligible" : ""}`}>
+                  className={`ed-card${d.alreadyApplied ? " ed-card-applied" : ""}${(blocked && !d.alreadyApplied) ? " ed-card-ineligible" : ""}`}>
 
                   {/* Card header */}
                   <div className="ed-card-head">
@@ -193,8 +214,10 @@ function EligibleDrives() {
                     <div className="ed-card-website">{d.companyWebsite}</div>
                   )}
 
-                  {/* Ineligibility reason */}
-                  {!isEligible && !d.alreadyApplied && d.eligibilityReason && (
+                  {/* Ineligibility reason — only for hard blocks (academic / penalty).
+                      An upgradation-policy block stays quiet here; its explanation
+                      surfaces as a toast if the student actually tries to apply. */}
+                  {blocked && !d.alreadyApplied && d.eligibilityReason && (
                     <div className="ed-ineligible-reason">
                       ⚠ {d.eligibilityReason}
                     </div>
@@ -227,7 +250,7 @@ function EligibleDrives() {
                     ) : (
                       <button
                         className="ed-apply-btn"
-                        disabled={!isEligible || applying === d.driveId}
+                        disabled={blocked || applying === d.driveId}
                         onClick={() => handleApply(d.driveId)}
                       >
                         {applying === d.driveId ? "Submitting…" : "Apply Now →"}

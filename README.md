@@ -282,4 +282,37 @@ Delete the out\ folder, then run compile.bat again.
 
 ---
 
+## Local Setup (Environment Variables)
+
+PRMS keeps secrets (database password, email password) out of git using a
+`.env` file. Before running the backend for the first time:
+
+1. Go to `backend/`.
+2. Copy the example file:
+
+   ```
+   copy .env.example .env      (Windows)
+   cp .env.example .env        (macOS/Linux)
+   ```
+3. Open `.env` and fill in your own values:
+   - `DB_USERNAME` / `DB_PASSWORD` — your local MySQL credentials for the
+     `placement_records_db` database.
+   - `MAIL_USERNAME` — the Gmail address PRMS should send selection/welcome
+     emails from.
+   - `MAIL_PASSWORD` — a Gmail **App Password** for that account (not your
+     normal Gmail password). Generate one at Google Account → Security →
+     2-Step Verification → App passwords (2-Step Verification must be on first).
+4. You'll also need the Google Sheets service-account key file at
+   `backend/src/main/resources/google-service-account.json` — this is not in
+   git either. Ask the repo owner to share it with you separately (it's tied
+   to the Google Form/Sheet the Placement Cell uses), and drop it in that
+   exact path.
+5. Run the backend as usual — it automatically picks up `.env` on startup
+   (via the `spring-dotenv` dependency), nothing else to configure.
+
+`.env` is gitignored, so your values stay local to your machine and are never
+pushed.
+
+---
+
 

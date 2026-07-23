@@ -50,6 +50,18 @@ public class Student {
     @Column(name = "placement_tier")
     private String placementTier;
 
+    /** Google Drive URL of the resume PDF the student uploaded via the form. */
+    @Column(name = "resume_url", length = 500)
+    private String resumeUrl;
+
+    /** Google Drive URL of the profile photo uploaded via the form. */
+    @Column(name = "photo_url", length = 500)
+    private String photoUrl;
+
+    /** Google Drive URL of the grade card / gradesheet uploaded via the form. */
+    @Column(name = "grade_sheet_url", length = 500)
+    private String gradeSheetUrl;
+
     public Integer getStudentId() {
         return studentId;
     }
@@ -128,5 +140,29 @@ public class Student {
 
     public void setPlacementTier(String placementTier) {
         this.placementTier = placementTier;
+    }
+
+    public String getResumeUrl() {
+        return resumeUrl;
+    }
+
+    public void setResumeUrl(String resumeUrl) {
+        this.resumeUrl = resumeUrl;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public String getGradeSheetUrl() {
+        return gradeSheetUrl;
+    }
+
+    public void setGradeSheetUrl(String gradeSheetUrl) {
+        this.gradeSheetUrl = gradeSheetUrl;
     }
 }

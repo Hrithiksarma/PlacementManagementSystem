@@ -22,6 +22,7 @@ axios.interceptors.response.use(
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         localStorage.removeItem("username");
+        localStorage.removeItem("displayName");
         window.location.href = "/login";
       }
     }
@@ -39,6 +40,7 @@ axios.interceptors.response.use(
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         localStorage.removeItem("username");
+        localStorage.removeItem("displayName");
         window.location.href = "/login";
       }
     }
@@ -57,6 +59,7 @@ export const logout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("role");
   localStorage.removeItem("username");
+  localStorage.removeItem("displayName");
   window.location.href = "/login";
 };
 
