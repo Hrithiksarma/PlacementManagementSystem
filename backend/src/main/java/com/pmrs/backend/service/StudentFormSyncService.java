@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Pulls new student registrations from the student Google Form's linked
@@ -43,6 +44,7 @@ public class StudentFormSyncService {
     private static final String CLASSPATH_PREFIX = "classpath:";
 
     private final StudentFormSubmissionRepository submissionRepository;
+    private final AdminNotificationService        adminNotificationService;
 
     @Value("${google.student-forms.spreadsheet-id:}")
     private String spreadsheetId;
@@ -55,8 +57,10 @@ public class StudentFormSyncService {
 
     private Sheets sheetsClient;
 
-    public StudentFormSyncService(StudentFormSubmissionRepository submissionRepository) {
-        this.submissionRepository = submissionRepository;
+    public StudentFormSyncService(StudentFormSubmissionRepository submissionRepository,
+                                  AdminNotificationService        adminNotificationService) {
+        this.submissionRepository     = submissionRepository;
+        this.adminNotificationService = adminNotificationService;
     }
 
     @Scheduled(fixedDelayString = "${google.student-forms.poll-interval-ms:300000}")
@@ -137,6 +141,25 @@ public class StudentFormSyncService {
 
             submissionRepository.save(s);
             created++;
+
+            // If a prior flagged submission from the same student is still
+            // pending, this row is their resubmission — supersede the old
+            // one and let the placement cell know.
+            Optional<StudentFormSubmission> prior = Optional.empty();
+            if (s.getRollNo() != null) {
+                prior = submissionRepository.findFirstByRollNoAndFlaggedTrueAndStatusOrderBySubmissionIdDesc(
+                        s.getRollNo(), StudentFormSubmission.STATUS_PENDING);
+            }
+            if (prior.isEmpty() && s.getEmail() != null && !s.getEmail().isBlank()) {
+                prior = submissionRepository.findFirstByEmailAndFlaggedTrueAndStatusOrderBySubmissionIdDesc(
+                        s.getEmail(), StudentFormSubmission.STATUS_PENDING);
+            }
+            if (prior.isPresent()) {
+                StudentFormSubmission old = prior.get();
+                old.setStatus(StudentFormSubmission.STATUS_SUPERSEDED);
+                submissionRepository.save(old);
+                adminNotificationService.notifyResubmission(s);
+            }
         }
 
         if (created > 0) {

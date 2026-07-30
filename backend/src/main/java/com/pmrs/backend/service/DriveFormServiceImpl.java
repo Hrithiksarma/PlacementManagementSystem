@@ -91,6 +91,9 @@ public class DriveFormServiceImpl implements DriveFormService {
         drive.setCompany(company);
         drive.setHrContact(hrContact);
         drive.setDriveDate(submission.getDriveDate());
+        drive.setPptDate(submission.getPptDate());
+        drive.setResumeSelectionDate(submission.getResumeSelectionDate());
+        drive.setFinalSelectionDate(submission.getFinalSelectionDate());
         drive.setRoleOffered(submission.getRoleOffered().trim());
         drive.setPackageLpa(submission.getPackageLpa());
         drive.setDriveType(blankToNull(submission.getDriveType()));
@@ -133,7 +136,7 @@ public class DriveFormServiceImpl implements DriveFormService {
                     // Company.tier is mandatory — default new companies to Tier A
                     // when the form left it blank; an admin can retier later.
                     company.setTier(normaliseTier(submission.getTier()));
-                    company.setWebsite(blankToNull(submission.getWebsite()));
+                    company.setWebsite(normaliseWebsite(submission.getWebsite()));
                     return companyRepository.save(company);
                 });
     }
@@ -180,5 +183,19 @@ public class DriveFormServiceImpl implements DriveFormService {
 
     private static String blankToNull(String value) {
         return (value == null || value.isBlank()) ? null : value.trim();
+    }
+
+    /**
+     * Companies.website has a DB CHECK requiring an http(s) URL, but recruiters
+     * often type a bare domain ("acme.com") or, occasionally, an email address
+     * in that field. Prefix bare domains with https://; drop values that still
+     * can't be a URL (e.g. contain "@") rather than fail the whole import.
+     */
+    private static String normaliseWebsite(String raw) {
+        String website = blankToNull(raw);
+        if (website == null) return null;
+        if (website.matches("(?i)^https?://.+")) return website;
+        if (website.contains("@")) return null;
+        return "https://" + website;
     }
 }

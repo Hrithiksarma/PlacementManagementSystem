@@ -152,8 +152,21 @@ public class GlobalExceptionHandler {
                 if (raw.endsWith("]")) raw = raw.substring(0, raw.length() - 1);
                 return raw.trim();
             }
+            if (msg != null && msg.contains("foreign key constraint fails")) {
+                String referencingTable = extractReferencingTable(msg);
+                return referencingTable != null
+                        ? "Cannot delete — this record is still referenced by existing " + referencingTable + " and must be removed first."
+                        : "Cannot delete — this record is still referenced by other data and must be removed first.";
+            }
             cause = cause.getCause();
         }
         return "Operation rejected by a database policy rule.";
+    }
+
+    /** Pulls the child table name out of MySQL's "...constraint fails (`schema`.`table`, CONSTRAINT ...)" text. */
+    private static String extractReferencingTable(String msg) {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("constraint fails \\(`[^`]+`\\.`([^`]+)`").matcher(msg);
+        return m.find() ? m.group(1) : null;
     }
 }

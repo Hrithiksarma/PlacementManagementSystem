@@ -17,9 +17,11 @@ import jakarta.persistence.*;
 @Table(name = "StudentFormSubmissions")
 public class StudentFormSubmission {
 
-    public static final String STATUS_PENDING  = "PENDING";
-    public static final String STATUS_INCLUDED = "INCLUDED";
-    public static final String STATUS_REJECTED = "REJECTED";
+    public static final String STATUS_PENDING    = "PENDING";
+    public static final String STATUS_INCLUDED   = "INCLUDED";
+    public static final String STATUS_REJECTED   = "REJECTED";
+    /** A flagged row that was replaced once the student resubmitted the form. */
+    public static final String STATUS_SUPERSEDED = "SUPERSEDED";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -89,6 +91,17 @@ public class StudentFormSubmission {
     /** Why the last bulk import skipped this row (null when it hasn't failed). */
     @Column(name = "failure_reason", length = 500)
     private String failureReason;
+
+    /** Set when an officer asks the student to correct something before it's imported. */
+    @Column(name = "flagged", nullable = false)
+    private boolean flagged = false;
+
+    /** The officer's comment explaining what needs to be corrected — emailed to the student. */
+    @Column(name = "flag_comment", length = 1000)
+    private String flagComment;
+
+    @Column(name = "flagged_at")
+    private java.time.LocalDateTime flaggedAt;
 
     public Integer getSubmissionId() {
         return submissionId;
@@ -232,5 +245,29 @@ public class StudentFormSubmission {
 
     public void setFailureReason(String failureReason) {
         this.failureReason = failureReason;
+    }
+
+    public boolean isFlagged() {
+        return flagged;
+    }
+
+    public void setFlagged(boolean flagged) {
+        this.flagged = flagged;
+    }
+
+    public String getFlagComment() {
+        return flagComment;
+    }
+
+    public void setFlagComment(String flagComment) {
+        this.flagComment = flagComment;
+    }
+
+    public java.time.LocalDateTime getFlaggedAt() {
+        return flaggedAt;
+    }
+
+    public void setFlaggedAt(java.time.LocalDateTime flaggedAt) {
+        this.flaggedAt = flaggedAt;
     }
 }

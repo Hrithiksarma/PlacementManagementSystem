@@ -16,8 +16,18 @@
   max-width: 400px;
   background: #ffffff;
   border-radius: 14px;
-  padding: 40px 36px 32px;
+  padding: 40px 36px 40px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  animation: login-card-in 0.4s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes login-card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-card { animation: none; }
 }
 
 /* ── Header ─────────────────────────────────────────────────────────────── */
@@ -27,11 +37,12 @@
   margin-bottom: 32px;
 }
 
-.login-logo-svg {
-  width: 62px;
-  height: 62px;
+.login-logo {
+  width: 64px;
+  height: 64px;
   display: block;
-  margin: 0 auto 12px;
+  margin: 0 auto 14px;
+  object-fit: contain;
 }
 
 .login-title {
@@ -95,6 +106,20 @@
   background: #fff;
 }
 
+.login-select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 34px;
+}
+
+.login-select:invalid {
+  color: #94a3b8;
+}
+
 .login-error {
   font-size: 0.8rem;
   color: #dc2626;
@@ -129,45 +154,4 @@
 .login-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
-}
-
-/* ── Demo accounts ──────────────────────────────────────────────────────── */
-
-.login-demo {
-  margin-top: 28px;
-  padding-top: 20px;
-  border-top: 1px solid #f1f5f9;
-}
-
-.login-demo-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: center;
-  margin: 0 0 10px;
-}
-
-.login-demo-accounts {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.demo-chip {
-  font-size: 0.73rem;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1.5px solid var(--chip-color, #64748b);
-  color: var(--chip-color, #64748b);
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.demo-chip:hover {
-  background: var(--chip-color, #64748b);
-  color: #fff;
 }

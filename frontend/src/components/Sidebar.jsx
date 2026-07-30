@@ -7,6 +7,8 @@ const ALL_ITEMS = [
   { path: "/admin/students",     label: "Students",     icon: "👥", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/companies",    label: "Companies",    icon: "🏢", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/drives",       label: "Drives",       icon: "📋", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/calendar",     label: "Calendar",     icon: "🗓️", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/notify-students", label: "Notify Students", icon: "📣", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/applications", label: "Applications", icon: "📄", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/forms",        label: "Forms",        icon: "📝", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/penalties",    label: "Penalties",    icon: "⚖️", roles: ["ADMIN", "PLACEMENT_OFFICER"] },

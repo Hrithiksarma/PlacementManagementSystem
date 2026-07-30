@@ -3,7 +3,7 @@ import Layout from "../components/Layout";
 import {
   deleteStudent,
   getFilteredStudents,
-  backfillStudentAccounts,
+  updateStudent,
 } from "../services/studentService";
 import { isAdmin } from "../services/authService";
 import "./Students.css";
@@ -12,6 +12,7 @@ const PROGRAMS = ["B.Tech", "M.Tech", "PhD"];
 
 // Job categories by CTC: A < 6 LPA · B 6–11.99 LPA · C ≥ 12 LPA
 const tierLabelFor = (t) => (t && t !== "Unplaced" ? `Tier ${t}` : (t ?? "—"));
+const TIER_OPTIONS = ["Unplaced", "A", "B", "C"];
 
 const DEPT_BY_PROGRAM = {
   "B.Tech": ["CSE", "ECE"],
@@ -62,14 +63,73 @@ function DocBlock({ label, url }) {
   );
 }
 
-function StudentDetailsModal({ student, onClose }) {
+function StudentDetailsModal({ student, onClose, onSave }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
   if (!student) return null;
+
   const field = (label, value) => (
     <div className="col-md-6 mb-2">
       <div className="text-muted" style={{ fontSize: "0.75rem" }}>{label}</div>
       <div className="fw-semibold">{value ?? "—"}</div>
     </div>
   );
+
+  const editField = (key) => ({
+    value: form[key] ?? "",
+    onChange: (e) => setForm({ ...form, [key]: e.target.value }),
+  });
+
+  const startEdit = () => {
+    setForm({
+      name: student.name ?? "",
+      email: student.email ?? "",
+      phone: student.phone ?? "",
+      cgpa: student.cgpa ?? "",
+      activeBacklogs: student.activeBacklogs ?? "",
+      placementTier: student.placementTier ?? "Unplaced",
+      resumeUrl: student.resumeUrl ?? "",
+      photoUrl: student.photoUrl ?? "",
+      gradeSheetUrl: student.gradeSheetUrl ?? "",
+    });
+    setError(null);
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setForm(null);
+    setError(null);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave(student.studentId, {
+        ...student,
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        cgpa: form.cgpa === "" ? null : parseFloat(form.cgpa),
+        activeBacklogs: form.activeBacklogs === "" ? null : parseInt(form.activeBacklogs, 10),
+        placementTier: form.placementTier,
+        resumeUrl: form.resumeUrl || null,
+        photoUrl: form.photoUrl || null,
+        gradeSheetUrl: form.gradeSheetUrl || null,
+      });
+      setIsEditing(false);
+      setForm(null);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message ?? "Failed to save changes.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div
@@ -78,7 +138,7 @@ function StudentDetailsModal({ student, onClose }) {
         display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1050,
         padding: 16,
       }}
-      onClick={onClose}
+      onClick={isEditing ? undefined : onClose}
     >
       <div
         style={{
@@ -95,34 +155,108 @@ function StudentDetailsModal({ student, onClose }) {
               {student.rollNo ?? "—"}
             </div>
           </div>
-          <button className="btn-close" onClick={onClose} aria-label="Close" />
+          <div className="d-flex align-items-center gap-2">
+            {!isEditing && (
+              <button className="btn btn-sm action-edit" onClick={startEdit}>
+                Edit
+              </button>
+            )}
+            <button className="btn-close" onClick={onClose} aria-label="Close" />
+          </div>
         </div>
 
-        <div className="row g-1">
-          {field("Email", student.email)}
-          {field("Phone", student.phone)}
-          {field("Department", student.department?.deptName)}
-          {field("Program / Branch",
-            student.department
-              ? `${student.department.program ?? "—"} · ${student.department.branch ?? "—"}`
-              : "—")}
-          {field("Batch Year", student.batchYear)}
-          {field("CGPA", student.cgpa)}
-          {field("Active Backlogs", student.activeBacklogs)}
-          {field("Placement Tier", tierLabelFor(student.placementTier))}
-        </div>
+        {error && <div className="alert alert-danger py-2">{error}</div>}
 
-        <hr />
+        {!isEditing ? (
+          <>
+            <div className="row g-1">
+              {field("Email", student.email)}
+              {field("Phone", student.phone)}
+              {field("Department", student.department?.deptName)}
+              {field("Program / Branch",
+                student.department
+                  ? `${student.department.program ?? "—"} · ${student.department.branch ?? "—"}`
+                  : "—")}
+              {field("Batch Year", student.batchYear)}
+              {field("CGPA", student.cgpa)}
+              {field("Active Backlogs", student.activeBacklogs)}
+              {field("Placement Tier", tierLabelFor(student.placementTier))}
+            </div>
 
-        {/* Documents */}
-        <div className="mb-2 fw-semibold">Documents</div>
-        {!student.resumeUrl && !student.photoUrl && !student.gradeSheetUrl ? (
-          <div className="text-muted">No documents on file (manually-added student).</div>
+            <hr />
+
+            {/* Documents */}
+            <div className="mb-2 fw-semibold">Documents</div>
+            {!student.resumeUrl && !student.photoUrl && !student.gradeSheetUrl ? (
+              <div className="text-muted">No documents on file (manually-added student).</div>
+            ) : (
+              <>
+                <DocBlock label="Resume"     url={student.resumeUrl} />
+                <DocBlock label="Photo"      url={student.photoUrl} />
+                <DocBlock label="Grade Card" url={student.gradeSheetUrl} />
+              </>
+            )}
+          </>
         ) : (
           <>
-            <DocBlock label="Resume"     url={student.resumeUrl} />
-            <DocBlock label="Photo"      url={student.photoUrl} />
-            <DocBlock label="Grade Card" url={student.gradeSheetUrl} />
+            <div className="row g-2">
+              <div className="col-md-6">
+                <label className="form-label">Name</label>
+                <input className="form-control" {...editField("name")} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Email</label>
+                <input className="form-control" type="email" {...editField("email")} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Phone</label>
+                <input className="form-control" {...editField("phone")} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Placement Tier</label>
+                <select className="form-select" {...editField("placementTier")}>
+                  {TIER_OPTIONS.map((t) => (
+                    <option key={t} value={t}>{tierLabelFor(t)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">CGPA</label>
+                <input className="form-control" type="number" step="0.01" min="0" max="10" {...editField("cgpa")} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Active Backlogs</label>
+                <input className="form-control" type="number" step="1" min="0" {...editField("activeBacklogs")} />
+              </div>
+            </div>
+
+            <hr />
+
+            <div className="mb-2 fw-semibold">Documents</div>
+            <div className="mb-3">
+              <label className="form-label">Resume URL</label>
+              <input className="form-control" placeholder="https://drive.google.com/..." {...editField("resumeUrl")} />
+              <DocBlock label="Resume" url={form.resumeUrl} />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Photo URL</label>
+              <input className="form-control" placeholder="https://drive.google.com/..." {...editField("photoUrl")} />
+              <DocBlock label="Photo" url={form.photoUrl} />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Grade Card URL</label>
+              <input className="form-control" placeholder="https://drive.google.com/..." {...editField("gradeSheetUrl")} />
+              <DocBlock label="Grade Card" url={form.gradeSheetUrl} />
+            </div>
+
+            <div className="d-flex gap-2 justify-content-end">
+              <button className="btn btn-outline-secondary" onClick={cancelEdit} disabled={saving}>
+                Cancel
+              </button>
+              <button className="btn btn-success" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving…" : "Save"}
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -138,9 +272,6 @@ function Students() {
     program: "B.Tech",
     batchYear: 2025,
   });
-  const [backfillLoading, setBackfillLoading] = useState(false);
-  const [backfillResult, setBackfillResult]   = useState(null);
-  const [backfillError, setBackfillError]     = useState(null);
   const [detailsStudent, setDetailsStudent]   = useState(null);
 
   const admin = isAdmin();
@@ -171,20 +302,11 @@ function Students() {
     }
   };
 
-  const handleBackfill = async () => {
-    setBackfillLoading(true);
-    setBackfillError(null);
-    setBackfillResult(null);
-    try {
-      const res = await backfillStudentAccounts();
-      setBackfillResult(res.data);
-    } catch (err) {
-      setBackfillError(
-        err.response?.data?.message ?? "Failed to create missing login accounts."
-      );
-    } finally {
-      setBackfillLoading(false);
-    }
+  const handleSaveStudent = async (id, payload) => {
+    const res = await updateStudent(id, payload);
+    const saved = res.data;
+    setStudents((prev) => prev.map((s) => (s.studentId === id ? saved : s)));
+    setDetailsStudent(saved);
   };
 
   return (
@@ -192,42 +314,12 @@ function Students() {
       {admin && (
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h2 className="mb-0">Students</h2>
-          <div className="d-flex gap-2 align-items-center">
-            <span
-              className="text-muted d-flex align-items-center gap-1"
-              style={{ fontSize: "0.82rem" }}
-            >
-              🎓 Students register through the Google Form (Forms → Students)
-            </span>
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              onClick={handleBackfill}
-              disabled={backfillLoading}
-              title="Create login accounts (username & temp password = roll number) for any student that doesn't have one yet"
-            >
-              {backfillLoading ? "Creating logins…" : "Create Missing Logins"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {admin && backfillError && (
-        <div className="alert alert-danger py-2">{backfillError}</div>
-      )}
-
-      {admin && backfillResult && (
-        <div className="alert alert-success py-2">
-          Created <strong>{backfillResult.created}</strong> new login account(s)
-          {backfillResult.skipped > 0 && <> — {backfillResult.skipped} student(s) already had one</>}.
-          {backfillResult.created > 0 && (
-            <>
-              {" "}Username and temporary password = student's roll number
-              {backfillResult.createdRollNumbers?.length > 0 && (
-                <> ({backfillResult.createdRollNumbers.join(", ")})</>
-              )}.
-              Students will be prompted to set a new password on first login.
-            </>
-          )}
+          <span
+            className="text-muted d-flex align-items-center gap-1"
+            style={{ fontSize: "0.82rem" }}
+          >
+            🎓 Students register through the Google Form (Forms → Students)
+          </span>
         </div>
       )}
 
@@ -362,6 +454,7 @@ function Students() {
       <StudentDetailsModal
         student={detailsStudent}
         onClose={() => setDetailsStudent(null)}
+        onSave={handleSaveStudent}
       />
     </Layout>
   );

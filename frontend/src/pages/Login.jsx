@@ -1,39 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../services/authService";
+import iiitgLogo from "../assets/logo_iiit.png";
 import "./Login.css";
 
-function IIITGLogo() {
-  return (
-    <svg
-      className="login-logo-svg"
-      viewBox="0 0 100 100"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="IIIT Guwahati logo"
-    >
-      {/* Outer circle */}
-      <circle cx="50" cy="50" r="44" fill="none" stroke="#1e3a8a" strokeWidth="6" />
-
-      {/* Ascending signal bars */}
-      <rect x="16" y="64" width="11" height="14" rx="1.5" fill="#1e3a8a" />
-      <rect x="31" y="52" width="11" height="26" rx="1.5" fill="#1e3a8a" />
-      <rect x="46" y="38" width="11" height="40" rx="1.5" fill="#1e3a8a" />
-
-      {/* Tower / antenna (stylised T) */}
-      <rect x="68" y="24" width="7" height="54" rx="1.5" fill="#1e3a8a" />
-      <rect x="60" y="24" width="23" height="7" rx="1.5" fill="#1e3a8a" />
-    </svg>
-  );
-}
-
-const DEMO_ACCOUNTS = [
-  { username: "admin",   password: "admin123",   role: "Admin",             color: "#dc2626" },
-  { username: "officer", password: "officer123", role: "Placement Officer", color: "#2563eb" },
-  { username: "student", password: "student123", role: "Student",           color: "#16a34a" },
+const PORTALS = [
+  { value: "ADMIN",             label: "Admin" },
+  { value: "PLACEMENT_OFFICER", label: "Placement Cell" },
+  { value: "STUDENT",           label: "Student" },
 ];
+const PORTAL_LABEL = Object.fromEntries(PORTALS.map((p) => [p.value, p.label]));
 
 function Login() {
-  const [form, setForm]       = useState({ username: "", password: "" });
+  const [form, setForm]       = useState({ portal: "", username: "", password: "" });
   const [error, setError]     = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate               = useNavigate();
@@ -42,6 +21,10 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.portal) {
+      setError("Select which portal you're logging into.");
+      return;
+    }
     if (!form.username.trim() || !form.password.trim()) {
       setError("Username and password are required.");
       return;
@@ -50,11 +33,20 @@ function Login() {
     setError(null);
     try {
       const res = await login(form.username.trim(), form.password);
+      const role = res.data.role;
+
+      if (role !== form.portal) {
+        setError(
+          `This account isn't a ${PORTAL_LABEL[form.portal]} account — ` +
+          `it belongs to the ${PORTAL_LABEL[role] ?? role} portal.`
+        );
+        return;
+      }
+
       localStorage.setItem("token",    res.data.token);
       localStorage.setItem("role",     res.data.role);
       localStorage.setItem("username", res.data.username);
 
-      const role = res.data.role;
       if (role === "STUDENT") {
         navigate(res.data.mustChangePassword ? "/student/change-password" : "/student/dashboard", { replace: true });
       } else if (["ADMIN", "PLACEMENT_OFFICER"].includes(role)) {
@@ -69,15 +61,13 @@ function Login() {
     }
   };
 
-  const fillDemo = (acc) => setForm({ username: acc.username, password: acc.password });
-
   return (
     <div className="login-page">
       <div className="login-card">
 
         {/* Header */}
         <div className="login-header">
-          <IIITGLogo />
+          <img src={iiitgLogo} alt="IIIT Guwahati" className="login-logo" />
           <h1 className="login-title">IIITG PRMS</h1>
           <p className="login-subtitle">Placement Record Management System</p>
           <p className="login-institute">Indian Institute of Information Technology Guwahati</p>
@@ -86,6 +76,22 @@ function Login() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="login-form">
           <div className="login-field">
+            <label className="login-label">Portal</label>
+            <select
+              className="login-input login-select"
+              value={form.portal}
+              onChange={field("portal")}
+              autoFocus
+              required
+            >
+              <option value="" disabled>Select portal</option>
+              {PORTALS.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="login-field">
             <label className="login-label">Username</label>
             <input
               type="text"
@@ -93,7 +99,6 @@ function Login() {
               placeholder="Enter username"
               value={form.username}
               onChange={field("username")}
-              autoFocus
               autoComplete="username"
             />
           </div>
@@ -120,24 +125,6 @@ function Login() {
             {loading ? "Signing in…" : "Sign In"}
           </button>
         </form>
-
-        {/* Demo accounts */}
-        <div className="login-demo">
-          <p className="login-demo-label">Demo accounts</p>
-          <div className="login-demo-accounts">
-            {DEMO_ACCOUNTS.map((acc) => (
-              <button
-                key={acc.username}
-                className="demo-chip"
-                style={{ "--chip-color": acc.color }}
-                type="button"
-                onClick={() => fillDemo(acc)}
-              >
-                {acc.role}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

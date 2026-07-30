@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import Layout from "../components/Layout";
-import { getAllDrives, addDrive, updateDrive, deleteDrive } from "../services/driveService";
+import { getAllDrives, addDrive, updateDrive, updateDriveStatus, deleteDrive } from "../services/driveService";
 import { getAllCompanies } from "../services/companyService";
 import { isAdmin } from "../services/authService";
 import "./Drives.css";
@@ -12,13 +12,16 @@ const STATUSES = ["Upcoming", "Active", "Completed", "Cancelled"];
 const tierLabelFor = (t) => (t === "All" ? "All Tiers" : t ? `Tier ${t}` : t);
 
 const emptyForm = {
-  companyId:   "",
-  roleOffered: "",
-  packageLpa:  "",
-  minCgpa:     "",
-  maxBacklogs: "",
-  driveDate:   "",
-  status:      "Upcoming",
+  companyId:           "",
+  roleOffered:         "",
+  packageLpa:          "",
+  minCgpa:             "",
+  maxBacklogs:         "",
+  pptDate:             "",
+  resumeSelectionDate: "",
+  driveDate:           "",
+  finalSelectionDate:  "",
+  status:              "Upcoming",
 };
 
 const STATUS_BADGE = {
@@ -36,6 +39,7 @@ function Drives() {
   const [showForm,    setShowForm]    = useState(false);
   const [editingId,   setEditingId]   = useState(null);
   const [form,        setForm]        = useState(emptyForm);
+  const [expandedDatesId, setExpandedDatesId] = useState(null);
 
   const admin = isAdmin();
 
@@ -60,13 +64,16 @@ function Drives() {
   };
 
   const buildPayload = () => ({
-    company:     form.companyId ? { companyId: parseInt(form.companyId) } : null,
-    roleOffered: form.roleOffered,
-    packageLpa:  form.packageLpa  !== "" ? parseFloat(form.packageLpa)  : null,
-    minCgpa:     form.minCgpa     !== "" ? parseFloat(form.minCgpa)     : null,
-    maxBacklogs: form.maxBacklogs !== "" ? parseInt(form.maxBacklogs)   : null,
-    driveDate:   form.driveDate || null,
-    status:      form.status || "Upcoming",
+    company:             form.companyId ? { companyId: parseInt(form.companyId) } : null,
+    roleOffered:         form.roleOffered,
+    packageLpa:          form.packageLpa  !== "" ? parseFloat(form.packageLpa)  : null,
+    minCgpa:             form.minCgpa     !== "" ? parseFloat(form.minCgpa)     : null,
+    maxBacklogs:         form.maxBacklogs !== "" ? parseInt(form.maxBacklogs)   : null,
+    pptDate:             form.pptDate || null,
+    resumeSelectionDate: form.resumeSelectionDate || null,
+    driveDate:           form.driveDate || null,
+    finalSelectionDate:  form.finalSelectionDate || null,
+    status:              form.status || "Upcoming",
   });
 
   const handleSaveDrive = async () => {
@@ -89,13 +96,16 @@ function Drives() {
 
   const handleEdit = (drive) => {
     setForm({
-      companyId:   drive.company?.companyId ?? "",
-      roleOffered: drive.roleOffered ?? "",
-      packageLpa:  drive.packageLpa  ?? "",
-      minCgpa:     drive.minCgpa     ?? "",
-      maxBacklogs: drive.maxBacklogs ?? "",
-      driveDate:   drive.driveDate   ?? "",
-      status:      drive.status      ?? "Upcoming",
+      companyId:           drive.company?.companyId ?? "",
+      roleOffered:         drive.roleOffered ?? "",
+      packageLpa:          drive.packageLpa  ?? "",
+      minCgpa:             drive.minCgpa     ?? "",
+      maxBacklogs:         drive.maxBacklogs ?? "",
+      pptDate:             drive.pptDate             ?? "",
+      resumeSelectionDate: drive.resumeSelectionDate  ?? "",
+      driveDate:           drive.driveDate   ?? "",
+      finalSelectionDate:  drive.finalSelectionDate  ?? "",
+      status:              drive.status      ?? "Upcoming",
     });
     setEditingId(drive.driveId);
     setShowForm(true);
@@ -113,7 +123,26 @@ function Drives() {
       if (hasSearched) handleSearch();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data ?? "Failed to delete drive");
+      const data = err.response?.data;
+      const message = typeof data === "string" ? data : data?.message;
+      alert(message ?? "Failed to delete drive");
+    }
+  };
+
+  const handleStatusChange = async (drive, newStatus) => {
+    if (newStatus === drive.status) return;
+    const previous = allDrives;
+    setAllDrives(allDrives.map((d) =>
+      d.driveId === drive.driveId ? { ...d, status: newStatus } : d
+    ));
+    try {
+      await updateDriveStatus(drive.driveId, newStatus);
+    } catch (err) {
+      console.error(err);
+      setAllDrives(previous);
+      const data = err.response?.data;
+      const message = typeof data === "string" ? data : data?.message;
+      alert(message ?? "Failed to update drive status");
     }
   };
 
@@ -258,11 +287,35 @@ function Drives() {
                 />
               </div>
               <div className="col-md-6">
-                <label className="form-label">Drive Date</label>
+                <label className="form-label">Pre-Placement Talk Date</label>
+                <input
+                  className="form-control"
+                  type="date"
+                  {...field("pptDate")}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Resume Selection Date</label>
+                <input
+                  className="form-control"
+                  type="date"
+                  {...field("resumeSelectionDate")}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Exam Date</label>
                 <input
                   className="form-control"
                   type="date"
                   {...field("driveDate")}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Final Selection Date</label>
+                <input
+                  className="form-control"
+                  type="date"
+                  {...field("finalSelectionDate")}
                 />
               </div>
               <div className="col-md-6">
@@ -308,55 +361,84 @@ function Drives() {
                   <th>Package (LPA)</th>
                   <th>Min CGPA</th>
                   <th>Max Backlogs</th>
-                  <th>Date</th>
+                  <th>Dates</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {displayedDrives.map((drive) => (
-                  <tr key={drive.driveId}>
-                    <td>{drive.driveId}</td>
-                    <td>{drive.company?.companyName ?? "—"}</td>
-                    <td>{drive.company?.tier ? tierLabelFor(drive.company.tier) : "—"}</td>
-                    <td>{drive.roleOffered}</td>
-                    <td>{drive.packageLpa ?? "—"}</td>
-                    <td>{drive.minCgpa ?? "—"}</td>
-                    <td>{drive.maxBacklogs ?? "—"}</td>
-                    <td>{formatDate(drive.driveDate)}</td>
-                    <td>
-                      {drive.status ? (
-                        <span className={`badge bg-${STATUS_BADGE[drive.status] ?? "secondary"}`}>
-                          {drive.status}
-                        </span>
-                      ) : "—"}
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-sm action-edit me-2"
-                        onClick={() => handleEdit(drive)}
-                      >
-                        Edit
-                      </button>
-                      {canDeleteDrive(drive) ? (
+                {displayedDrives.map((drive) => {
+                  const isExpanded = expandedDatesId === drive.driveId;
+                  return (
+                  <Fragment key={drive.driveId}>
+                    <tr>
+                      <td>{drive.driveId}</td>
+                      <td>{drive.company?.companyName ?? "—"}</td>
+                      <td>{drive.company?.tier ? tierLabelFor(drive.company.tier) : "—"}</td>
+                      <td>{drive.roleOffered}</td>
+                      <td>{drive.packageLpa ?? "—"}</td>
+                      <td>{drive.minCgpa ?? "—"}</td>
+                      <td>{drive.maxBacklogs ?? "—"}</td>
+                      <td>
                         <button
-                          className="btn btn-sm action-delete"
-                          onClick={() => handleDelete(drive)}
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => setExpandedDatesId(isExpanded ? null : drive.driveId)}
                         >
-                          Delete
+                          {isExpanded ? "Hide" : "📅 View"}
                         </button>
-                      ) : (
-                        <span
-                          className="btn btn-sm btn-outline-secondary disabled"
-                          title="Completed drives can only be deleted by Admin"
-                          style={{ cursor: "not-allowed", opacity: 0.55, fontSize: "0.75rem" }}
+                      </td>
+                      <td>
+                        <select
+                          className={`form-select form-select-sm border-${STATUS_BADGE[drive.status] ?? "secondary"} text-${STATUS_BADGE[drive.status] ?? "secondary"} fw-semibold`}
+                          style={{ width: "auto" }}
+                          value={drive.status ?? "Upcoming"}
+                          onChange={(e) => handleStatusChange(drive, e.target.value)}
                         >
-                          🔒 Locked
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          {STATUSES.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-sm action-edit me-2"
+                          onClick={() => handleEdit(drive)}
+                        >
+                          Edit
+                        </button>
+                        {canDeleteDrive(drive) ? (
+                          <button
+                            className="btn btn-sm action-delete"
+                            onClick={() => handleDelete(drive)}
+                          >
+                            Delete
+                          </button>
+                        ) : (
+                          <span
+                            className="btn btn-sm btn-outline-secondary disabled"
+                            title="Completed drives can only be deleted by Admin"
+                            style={{ cursor: "not-allowed", opacity: 0.55, fontSize: "0.75rem" }}
+                          >
+                            🔒 Locked
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan="9" className="bg-light">
+                          <div className="d-flex flex-wrap gap-4">
+                            <div><span className="text-muted">Pre-Placement Talk:</span> {formatDate(drive.pptDate)}</div>
+                            <div><span className="text-muted">Resume Selection:</span> {formatDate(drive.resumeSelectionDate)}</div>
+                            <div><span className="text-muted">Exam:</span> {formatDate(drive.driveDate)}</div>
+                            <div><span className="text-muted">Final Selection:</span> {formatDate(drive.finalSelectionDate)}</div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           )}

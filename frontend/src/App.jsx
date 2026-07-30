@@ -7,6 +7,8 @@ import Dashboard    from "./pages/Dashboard";
 import Companies    from "./pages/Companies";
 import Students     from "./pages/Students";
 import Drives       from "./pages/Drives";
+import Calendar     from "./pages/Calendar";
+import NotifyStudents from "./pages/NotifyStudents";
 import Applications from "./pages/Applications";
 import Login          from "./pages/Login";
 import AccessDenied   from "./pages/AccessDenied";
@@ -73,6 +75,12 @@ function App() {
         } />
         <Route path="/admin/drives" element={
           <AdminRoute><Drives /></AdminRoute>
+        } />
+        <Route path="/admin/calendar" element={
+          <AdminRoute><Calendar /></AdminRoute>
+        } />
+        <Route path="/admin/notify-students" element={
+          <AdminRoute><NotifyStudents /></AdminRoute>
         } />
         <Route path="/admin/applications" element={
           <AdminRoute><Applications /></AdminRoute>

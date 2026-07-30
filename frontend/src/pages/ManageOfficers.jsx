@@ -5,6 +5,7 @@ import {
   createOfficer,
   disableOfficer,
   enableOfficer,
+  sendOfficerWelcomeEmail,
 } from "../services/officerService";
 
 function ManageOfficers() {
@@ -15,6 +16,10 @@ function ManageOfficers() {
   const [creating, setCreating]   = useState(false);
   const [createError, setCreateError] = useState(null);
   const [created, setCreated]     = useState(null);
+  const [officerComment, setOfficerComment] = useState("");
+  const [sendingEmail, setSendingEmail]     = useState(false);
+  const [emailSent, setEmailSent]           = useState(false);
+  const [emailError, setEmailError]         = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -30,6 +35,9 @@ function ManageOfficers() {
     e.preventDefault();
     setCreateError(null);
     setCreated(null);
+    setOfficerComment("");
+    setEmailSent(false);
+    setEmailError(null);
     setCreating(true);
     try {
       const res = await createOfficer(form.username.trim(), form.email.trim());
@@ -40,6 +48,19 @@ function ManageOfficers() {
       setCreateError(err.response?.data?.message ?? "Failed to create officer account.");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleSendWelcomeEmail = async () => {
+    setSendingEmail(true);
+    setEmailError(null);
+    try {
+      await sendOfficerWelcomeEmail(created.userId, created.temporaryPassword, officerComment.trim());
+      setEmailSent(true);
+    } catch (err) {
+      setEmailError(err.response?.data?.message ?? "Failed to send the welcome email.");
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -101,6 +122,35 @@ function ManageOfficers() {
               <div className="text-muted mt-1" style={{ fontSize: "0.85rem" }}>
                 This is shown only once — relay it to the officer now. They'll be
                 prompted to set their own password on first login.
+              </div>
+            </div>
+          )}
+
+          {created && (
+            <div className="card mt-3">
+              <div className="card-body">
+                <div className="fw-semibold mb-2">Admin Comments</div>
+                <textarea
+                  className="form-control mb-3"
+                  rows="3"
+                  placeholder="Optional note to include in the welcome email…"
+                  value={officerComment}
+                  onChange={(e) => setOfficerComment(e.target.value)}
+                  disabled={emailSent}
+                />
+                {emailError && <div className="alert alert-danger py-2">{emailError}</div>}
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSendWelcomeEmail}
+                  disabled={sendingEmail || emailSent}
+                >
+                  {emailSent ? "Email Sent ✓" : sendingEmail ? "Sending…" : "Send Mail"}
+                </button>
+                {emailSent && (
+                  <div className="text-success mt-2" style={{ fontSize: "0.85rem" }}>
+                    Sent to {created.email}.
+                  </div>
+                )}
               </div>
             </div>
           )}

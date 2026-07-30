@@ -27,11 +27,14 @@ public class StudentFormServiceImpl implements StudentFormService {
 
     private final StudentFormSubmissionRepository submissionRepository;
     private final StudentService                  studentService;
+    private final FlagEmailService                flagEmailService;
 
     public StudentFormServiceImpl(StudentFormSubmissionRepository submissionRepository,
-                                  StudentService                  studentService) {
+                                  StudentService                  studentService,
+                                  FlagEmailService                flagEmailService) {
         this.submissionRepository = submissionRepository;
         this.studentService       = studentService;
+        this.flagEmailService     = flagEmailService;
     }
 
     @Override
@@ -66,6 +69,27 @@ public class StudentFormServiceImpl implements StudentFormService {
         return submissionRepository.save(submission);
     }
 
+    @Override
+    @Transactional
+    public StudentFormSubmission flagSubmission(Integer submissionId, String comment) {
+        StudentFormSubmission submission = getSubmission(submissionId);
+        if (!StudentFormSubmission.STATUS_PENDING.equals(submission.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Submission " + submissionId + " is already " + submission.getStatus() + ".");
+        }
+        if (submission.isFlagged()) {
+            throw new IllegalArgumentException(
+                    "Submission " + submissionId + " is already flagged.");
+        }
+        submission.setFlagged(true);
+        submission.setFlagComment(comment);
+        submission.setFlaggedAt(java.time.LocalDateTime.now());
+        StudentFormSubmission saved = submissionRepository.save(submission);
+        // Fired after the save so a mail hiccup can't roll back the flag itself.
+        flagEmailService.sendFlagEmail(saved.getEmail(), saved.getFullName(), comment);
+        return saved;
+    }
+
     /**
      * Not {@code @Transactional} on purpose: each row is imported in its own
      * transaction (via {@code importFromSubmission}), so one bad row that
@@ -76,7 +100,47 @@ public class StudentFormServiceImpl implements StudentFormService {
         List<StudentFormSubmission> pending =
                 submissionRepository.findByStatusOrderBySubmissionIdDesc(
                         StudentFormSubmission.STATUS_PENDING);
+        return importBatch(pending);
+    }
 
+    /**
+     * Imports only the given submission IDs. Not {@code @Transactional} for
+     * the same reason as {@link #importAllPending()}.
+     */
+    @Override
+    public BulkImportResultDTO importSelected(List<Integer> submissionIds) {
+        List<StudentFormSubmission> toImport = new ArrayList<>();
+        List<BulkImportResultDTO.Failure> upfrontFailures = new ArrayList<>();
+
+        for (Integer id : submissionIds) {
+            StudentFormSubmission submission = submissionRepository.findById(id).orElse(null);
+            if (submission == null) {
+                upfrontFailures.add(new BulkImportResultDTO.Failure(
+                        "Submission #" + id, "Submission not found."));
+            } else if (!StudentFormSubmission.STATUS_PENDING.equals(submission.getStatus())) {
+                upfrontFailures.add(new BulkImportResultDTO.Failure(
+                        displayName(submission), "Already " + submission.getStatus() + "."));
+            } else {
+                toImport.add(submission);
+            }
+        }
+
+        BulkImportResultDTO result = importBatch(toImport);
+        if (upfrontFailures.isEmpty()) {
+            return result;
+        }
+        List<BulkImportResultDTO.Failure> combinedFailures = new ArrayList<>(upfrontFailures);
+        combinedFailures.addAll(result.getFailures());
+        return new BulkImportResultDTO(
+                result.getCreated(), result.getFailed() + upfrontFailures.size(), combinedFailures);
+    }
+
+    /**
+     * Shared per-row import loop used by both {@link #importAllPending()} and
+     * {@link #importSelected(List)}. One failing row is recorded and skipped
+     * rather than aborting the rest of the batch.
+     */
+    private BulkImportResultDTO importBatch(List<StudentFormSubmission> submissions) {
         int created = 0;
         int failed = 0;
         List<BulkImportResultDTO.Failure> failures = new ArrayList<>();
@@ -84,7 +148,7 @@ public class StudentFormServiceImpl implements StudentFormService {
         // per-row existsByRollNo check only sees already-imported students.
         Set<String> rollNosSeenThisRun = new HashSet<>();
 
-        for (StudentFormSubmission submission : pending) {
+        for (StudentFormSubmission submission : submissions) {
             try {
                 String rollNo = submission.getRollNo() == null ? "" : submission.getRollNo().trim();
                 if (!rollNo.isEmpty() && !rollNosSeenThisRun.add(rollNo)) {

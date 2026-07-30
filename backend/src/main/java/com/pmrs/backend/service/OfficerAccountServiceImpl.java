@@ -21,12 +21,16 @@ public class OfficerAccountServiceImpl implements OfficerAccountService {
     private static final int PASSWORD_LENGTH = 12;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final UserRepository  userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserRepository             userRepository;
+    private final PasswordEncoder            passwordEncoder;
+    private final OfficerWelcomeEmailService officerWelcomeEmailService;
 
-    public OfficerAccountServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public OfficerAccountServiceImpl(UserRepository             userRepository,
+                                     PasswordEncoder            passwordEncoder,
+                                     OfficerWelcomeEmailService officerWelcomeEmailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.officerWelcomeEmailService = officerWelcomeEmailService;
     }
 
     @Override
@@ -73,6 +77,19 @@ public class OfficerAccountServiceImpl implements OfficerAccountService {
 
         user.setEnabled(enabled);
         userRepository.save(user);
+    }
+
+    @Override
+    public void sendWelcomeEmail(Long userId, String temporaryPassword, String comment) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Officer account not found: " + userId));
+
+        if (user.getRole() != Role.PLACEMENT_OFFICER) {
+            throw new IllegalArgumentException("User " + userId + " is not a placement officer account.");
+        }
+
+        officerWelcomeEmailService.sendWelcomeEmail(
+                user.getEmail(), user.getUsername(), temporaryPassword, comment);
     }
 
     private String generateTemporaryPassword() {

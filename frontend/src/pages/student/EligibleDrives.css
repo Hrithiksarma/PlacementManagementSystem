@@ -322,3 +322,13 @@
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+.ed-card-highlight {
+  animation: ed-highlight 2.5s ease-out forwards;
+}
+
+@keyframes ed-highlight {
+  0%   { box-shadow: 0 0 0 3px #2563eb, 0 0 16px rgba(37,99,235,0.3); }
+  60%  { box-shadow: 0 0 0 3px #2563eb, 0 0 16px rgba(37,99,235,0.3); }
+  100% { box-shadow: none; }
+}

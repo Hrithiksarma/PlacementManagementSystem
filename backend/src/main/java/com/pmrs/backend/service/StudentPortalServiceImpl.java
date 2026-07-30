@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pmrs.backend.exception.ResourceNotFoundException;
+import com.pmrs.backend.util.AcademicEligibility;
 import com.pmrs.backend.util.ApplicationStatusValidator;
 import com.pmrs.backend.util.TierPolicy;
 
@@ -102,20 +103,9 @@ public class StudentPortalServiceImpl implements StudentPortalService {
      * Academic eligibility: does this student meet the drive's CGPA / backlog
      * requirements?  Has nothing to do with placement outcome.
      */
-    private String validateAcademicEligibility(Student student,
+    private String validateAcademicEligibility(Student student, Drive drive,
                                                 Optional<EligibilityCriteria> ec) {
-        if (ec.isEmpty()) return null;
-        EligibilityCriteria criteria = ec.get();
-        if (criteria.getMinCgpa() != null
-                && (student.getCgpa() == null || student.getCgpa() < criteria.getMinCgpa())) {
-            return "Minimum CGPA required is " + criteria.getMinCgpa() + ".";
-        }
-        if (criteria.getMaxBacklogs() != null
-                && (student.getActiveBacklogs() == null
-                        || student.getActiveBacklogs() > criteria.getMaxBacklogs())) {
-            return "Maximum allowed backlogs is " + criteria.getMaxBacklogs() + ".";
-        }
-        return null;
+        return AcademicEligibility.checkReason(student, drive, ec);
     }
 
     /** All of the student's accepted offers — the source of "current CTC". */
@@ -163,7 +153,7 @@ public class StudentPortalServiceImpl implements StudentPortalService {
      */
     private String getEligibilityReason(Student student, Drive drive,
                                          Optional<EligibilityCriteria> ec) {
-        String academic = validateAcademicEligibility(student, ec);
+        String academic = validateAcademicEligibility(student, drive, ec);
         if (academic != null) return academic;
 
         return validateUpgradationPolicy(student, drive);
@@ -229,7 +219,7 @@ public class StudentPortalServiceImpl implements StudentPortalService {
             // the policy explanation only surfaces if they actually try to
             // apply (server-side rejection message, same wording as here).
             String hardBlockReason = bar.isBarred() ? bar.getMessage()
-                                                     : validateAcademicEligibility(s, ecOpt);
+                                                     : validateAcademicEligibility(s, drive, ecOpt);
             String upgradationReason = hardBlockReason == null
                     ? validateUpgradationPolicy(s, drive) : null;
             String reason = hardBlockReason != null ? hardBlockReason : upgradationReason;

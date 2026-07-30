@@ -10,3 +10,6 @@ export const createOfficer = (username, email) =>
 export const disableOfficer = (id) => axios.patch(`${API_URL}/${id}/disable`);
 
 export const enableOfficer = (id) => axios.patch(`${API_URL}/${id}/enable`);
+
+export const sendOfficerWelcomeEmail = (userId, temporaryPassword, comment) =>
+  axios.post(`${API_URL}/${userId}/send-welcome-email`, { temporaryPassword, comment });

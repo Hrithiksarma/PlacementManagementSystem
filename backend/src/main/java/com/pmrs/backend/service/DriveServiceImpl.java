@@ -49,12 +49,33 @@ public class DriveServiceImpl implements DriveService {
         existing.setCompany(updated.getCompany());
         existing.setHrContact(updated.getHrContact());
         existing.setDriveDate(updated.getDriveDate());
+        existing.setPptDate(updated.getPptDate());
+        existing.setResumeSelectionDate(updated.getResumeSelectionDate());
+        existing.setFinalSelectionDate(updated.getFinalSelectionDate());
         existing.setRoleOffered(updated.getRoleOffered());
         existing.setPackageLpa(updated.getPackageLpa());
         existing.setDriveType(updated.getDriveType());
         existing.setStatus(updated.getStatus());
         existing.setMinCgpa(updated.getMinCgpa());
         existing.setMaxBacklogs(updated.getMaxBacklogs());
+        return driveRepository.save(existing);
+    }
+
+    private static final java.util.Set<String> VALID_STATUSES =
+            java.util.Set.of("Upcoming", "Active", "Completed", "Cancelled");
+
+    @Override
+    public Drive updateStatus(Integer id, String status) {
+        Drive existing = driveRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Drive not found with id: " + id));
+
+        String match = VALID_STATUSES.stream()
+                .filter(s -> s.equalsIgnoreCase(status))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Invalid status '" + status + "'. Must be one of " + VALID_STATUSES + "."));
+
+        existing.setStatus(match);
         return driveRepository.save(existing);
     }
 

@@ -58,8 +58,20 @@ public class DriveFormSubmission {
     @Column(name = "drive_date")
     private LocalDate driveDate;
 
+    @Column(name = "ppt_date")
+    private LocalDate pptDate;
+
+    @Column(name = "resume_selection_date")
+    private LocalDate resumeSelectionDate;
+
+    @Column(name = "final_selection_date")
+    private LocalDate finalSelectionDate;
+
     @Column(name = "role_offered")
     private String roleOffered;
+
+    @Column(name = "jd_url", length = 500)
+    private String jdUrl;
 
     @Column(name = "package_lpa")
     private BigDecimal packageLpa;
@@ -168,12 +180,44 @@ public class DriveFormSubmission {
         this.driveDate = driveDate;
     }
 
+    public LocalDate getPptDate() {
+        return pptDate;
+    }
+
+    public void setPptDate(LocalDate pptDate) {
+        this.pptDate = pptDate;
+    }
+
+    public LocalDate getResumeSelectionDate() {
+        return resumeSelectionDate;
+    }
+
+    public void setResumeSelectionDate(LocalDate resumeSelectionDate) {
+        this.resumeSelectionDate = resumeSelectionDate;
+    }
+
+    public LocalDate getFinalSelectionDate() {
+        return finalSelectionDate;
+    }
+
+    public void setFinalSelectionDate(LocalDate finalSelectionDate) {
+        this.finalSelectionDate = finalSelectionDate;
+    }
+
     public String getRoleOffered() {
         return roleOffered;
     }
 
     public void setRoleOffered(String roleOffered) {
         this.roleOffered = roleOffered;
+    }
+
+    public String getJdUrl() {
+        return jdUrl;
+    }
+
+    public void setJdUrl(String jdUrl) {
+        this.jdUrl = jdUrl;
     }
 
     public BigDecimal getPackageLpa() {

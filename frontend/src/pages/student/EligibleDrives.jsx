@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Layout from "../../components/Layout";
 import { getEligibleDrives, applyToDrive, getPenaltyStatus } from "../../services/studentPortalService";
 import "./EligibleDrives.css";
@@ -46,6 +47,21 @@ function EligibleDrives() {
   const [filterStatus,setFilterStatus]= useState("All");
 
   const [penalty, setPenalty] = useState(null);
+
+  const location       = useLocation();
+  const highlightId    = location.state?.highlightDriveId ?? null;
+  const highlightedRef = useRef(false);
+
+  useEffect(() => {
+    if (!highlightId || highlightedRef.current || drives.length === 0) return;
+    highlightedRef.current = true;
+    const el = document.getElementById(`drive-${highlightId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ed-card-highlight");
+      setTimeout(() => el.classList.remove("ed-card-highlight"), 2500);
+    }
+  }, [drives, highlightId]);
 
   const loadDrives = () => {
     setLoading(true);
@@ -194,6 +210,7 @@ function EligibleDrives() {
 
               return (
                 <div key={d.driveId}
+                  id={`drive-${d.driveId}`}
                   className={`ed-card${d.alreadyApplied ? " ed-card-applied" : ""}${(blocked && !d.alreadyApplied) ? " ed-card-ineligible" : ""}`}>
 
                   {/* Card header */}

@@ -95,6 +95,9 @@ public class StudentServiceImpl implements StudentService {
         existing.setActiveBacklogs(updated.getActiveBacklogs());
         existing.setPhone(updated.getPhone());
         existing.setPlacementTier(updated.getPlacementTier());
+        existing.setResumeUrl(updated.getResumeUrl());
+        existing.setPhotoUrl(updated.getPhotoUrl());
+        existing.setGradeSheetUrl(updated.getGradeSheetUrl());
         // roll_no is deliberately absent — roll numbers are permanent.
         return studentRepository.save(existing);
     }

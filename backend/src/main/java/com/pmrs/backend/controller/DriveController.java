@@ -1,6 +1,11 @@
 package com.pmrs.backend.controller;
 
+import com.pmrs.backend.dto.NotifyStudentsRequest;
+import com.pmrs.backend.dto.UpdateDriveStatusRequest;
 import com.pmrs.backend.entity.Drive;
+import com.pmrs.backend.entity.Student;
+import com.pmrs.backend.service.DriveEligibilityService;
+import com.pmrs.backend.service.DriveReminderService;
 import com.pmrs.backend.service.DriveService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,10 +23,28 @@ import java.util.List;
 @CrossOrigin("*")
 public class DriveController {
 
-    private final DriveService driveService;
+    private final DriveService             driveService;
+    private final DriveEligibilityService  driveEligibilityService;
+    private final DriveReminderService     driveReminderService;
 
-    public DriveController(DriveService driveService) {
-        this.driveService = driveService;
+    public DriveController(DriveService             driveService,
+                           DriveEligibilityService  driveEligibilityService,
+                           DriveReminderService     driveReminderService) {
+        this.driveService             = driveService;
+        this.driveEligibilityService  = driveEligibilityService;
+        this.driveReminderService     = driveReminderService;
+    }
+
+    @Operation(summary = "Get students eligible for a drive")
+    @GetMapping("/{id}/eligible-students")
+    public List<Student> getEligibleStudents(@PathVariable Integer id) {
+        return driveEligibilityService.getEligibleStudents(id);
+    }
+
+    @Operation(summary = "Email selected eligible students about a drive event")
+    @PostMapping("/{id}/notify")
+    public void notifyStudents(@PathVariable Integer id, @RequestBody NotifyStudentsRequest request) {
+        driveReminderService.sendReminder(id, request.getEventType(), request.getStudentIds());
     }
 
     @Operation(summary = "Get all drives")
@@ -59,6 +82,13 @@ public class DriveController {
     public Drive updateDrive(@PathVariable Integer id,
                              @Valid @RequestBody Drive drive) {
         return driveService.updateDrive(id, drive);
+    }
+
+    @Operation(summary = "Update just a drive's status (Upcoming / Active / Completed / Cancelled)")
+    @PatchMapping("/{id}/status")
+    public Drive updateStatus(@PathVariable Integer id,
+                              @Valid @RequestBody UpdateDriveStatusRequest request) {
+        return driveService.updateStatus(id, request.getStatus());
     }
 
     @Operation(summary = "Delete drive by ID")

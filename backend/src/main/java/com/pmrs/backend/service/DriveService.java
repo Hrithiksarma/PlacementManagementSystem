@@ -14,6 +14,8 @@ public interface DriveService {
 
     Drive updateDrive(Integer id, Drive drive);
 
+    Drive updateStatus(Integer id, String status);
+
     void deleteDrive(Integer id);
 
     List<Drive> getDrivesByStatus(String status);

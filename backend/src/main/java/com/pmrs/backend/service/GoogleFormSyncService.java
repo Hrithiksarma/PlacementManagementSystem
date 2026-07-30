@@ -58,7 +58,7 @@ public class GoogleFormSyncService {
     @Value("${google.forms.spreadsheet-id:}")
     private String spreadsheetId;
 
-    @Value("${google.forms.sheet-range:Form Responses 1!A1:AT}")
+    @Value("${google.forms.sheet-range:Form Responses 1}")
     private String sheetRange;
 
     @Value("${google.forms.credentials-path:classpath:google-service-account.json}")
@@ -139,7 +139,11 @@ public class GoogleFormSyncService {
             s.setHrEmail(cell(row, cols.hrEmail));
             s.setHrPhone(cell(row, cols.hrPhone));
             s.setDriveDate(parseDate(cell(row, cols.driveDate)));
+            s.setPptDate(parseDate(cell(row, cols.pptDate)));
+            s.setResumeSelectionDate(parseDate(cell(row, cols.resumeSelectionDate)));
+            s.setFinalSelectionDate(parseDate(cell(row, cols.finalSelectionDate)));
             s.setRoleOffered(roleOffered);
+            s.setJdUrl(cell(row, cols.jdUrl));
             s.setPackageLpa(packageLpa);
             s.setDriveType(cell(row, cols.driveType));
             s.setMinCgpa(parseDouble(cell(row, cols.minCgpa)));
@@ -201,7 +205,8 @@ public class GoogleFormSyncService {
     private static final class ColumnMap {
         int timestamp = -1, companyName = -1, sector = -1, tier = -1, website = -1,
             hrName = -1, hrEmail = -1, hrPhone = -1, driveDate = -1, roleOffered = -1,
-            packageLpa = -1, driveType = -1, minCgpa = -1, maxBacklogs = -1;
+            packageLpa = -1, driveType = -1, minCgpa = -1, maxBacklogs = -1, jdUrl = -1,
+            pptDate = -1, resumeSelectionDate = -1, finalSelectionDate = -1;
 
         /** The legacy fixed A–N layout. */
         static ColumnMap positional() {
@@ -242,6 +247,8 @@ public class GoogleFormSyncService {
                     m.sector = i;
                 } else if (m.website < 0 && h.equals("company website")) {
                     m.website = i;
+                } else if (m.jdUrl < 0 && (h.equals("jd upload") || h.equals("job description document"))) {
+                    m.jdUrl = i;
                 } else if (m.hrName < 0 && h.equals("contact person name")) {
                     m.hrName = i;
                 } else if (m.hrEmail < 0 && h.startsWith("contact person e-mail")) {
@@ -250,6 +257,12 @@ public class GoogleFormSyncService {
                     m.hrPhone = i;
                 } else if (m.driveDate < 0 && h.startsWith("tentative date of online/offline exam")) {
                     m.driveDate = i;
+                } else if (m.pptDate < 0 && h.startsWith("tentative date of pre placement talk")) {
+                    m.pptDate = i;
+                } else if (m.resumeSelectionDate < 0 && h.startsWith("tentative date of resume selection")) {
+                    m.resumeSelectionDate = i;
+                } else if (m.finalSelectionDate < 0 && h.startsWith("tentative date of final selection")) {
+                    m.finalSelectionDate = i;
                 } else if (m.roleOffered < 0 && h.startsWith("designation offered")) {
                     m.roleOffered = i;
                 } else if (m.driveType < 0 && h.equals("role offered")) {
@@ -284,6 +297,9 @@ public class GoogleFormSyncService {
                 } else if (m.hrPhone < 0 && (h.contains("phone") || h.contains("mobile")
                         || h.contains("contact number") || h.contains("contact no"))) {
                     m.hrPhone = i;
+                } else if (m.jdUrl < 0 && (h.contains("jd") || h.contains("attachment")
+                        || h.contains("job desc"))) {
+                    m.jdUrl = i;
                 } else if (m.website < 0 && (h.contains("website") || h.contains("url"))) {
                     m.website = i;
                 } else if (m.tier < 0 && h.contains("tier")) {

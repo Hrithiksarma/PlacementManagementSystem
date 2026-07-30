@@ -1,6 +1,8 @@
 package com.pmrs.backend.controller;
 
 import com.pmrs.backend.dto.BulkImportResultDTO;
+import com.pmrs.backend.dto.FlagSubmissionRequest;
+import com.pmrs.backend.dto.ImportSelectedRequest;
 import com.pmrs.backend.entity.StudentFormSubmission;
 import com.pmrs.backend.service.StudentFormService;
 import com.pmrs.backend.service.StudentFormSyncService;
@@ -52,10 +54,22 @@ public class StudentFormController {
         return studentFormService.importAllPending();
     }
 
+    @Operation(summary = "Import only the given pending submissions into PRMS")
+    @PostMapping("/import-selected")
+    public BulkImportResultDTO importSelected(@RequestBody ImportSelectedRequest request) {
+        return studentFormService.importSelected(request.getIds());
+    }
+
     @Operation(summary = "Import a single pending submission into PRMS")
     @PostMapping("/{id}/include")
     public StudentFormSubmission include(@PathVariable Integer id) {
         return studentFormService.includeSubmission(id);
+    }
+
+    @Operation(summary = "Flag a pending submission for correction and email the student")
+    @PostMapping("/{id}/flag")
+    public StudentFormSubmission flag(@PathVariable Integer id, @RequestBody FlagSubmissionRequest request) {
+        return studentFormService.flagSubmission(id, request.getComment());
     }
 
     @Operation(summary = "Reject a pending submission")

@@ -3,6 +3,7 @@ package com.pmrs.backend.controller;
 import com.pmrs.backend.dto.CreateOfficerRequest;
 import com.pmrs.backend.dto.OfficerAccountDTO;
 import com.pmrs.backend.dto.OfficerCreatedDTO;
+import com.pmrs.backend.dto.OfficerWelcomeEmailRequest;
 import com.pmrs.backend.service.OfficerAccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +31,12 @@ public class AdminController {
     public ResponseEntity<OfficerCreatedDTO> createOfficer(@Valid @RequestBody CreateOfficerRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(officerAccountService.createOfficer(request));
+    }
+
+    @Operation(summary = "Email a newly-created officer their username, temporary password, and an optional admin note")
+    @PostMapping("/{id}/send-welcome-email")
+    public void sendWelcomeEmail(@PathVariable Long id, @Valid @RequestBody OfficerWelcomeEmailRequest request) {
+        officerAccountService.sendWelcomeEmail(id, request.getTemporaryPassword(), request.getComment());
     }
 
     @Operation(summary = "List all placement officer accounts")
