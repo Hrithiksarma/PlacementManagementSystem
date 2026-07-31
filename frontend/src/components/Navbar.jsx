@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { GraduationCap } from "lucide-react";
 import { logout, getUsername, getRole } from "../services/authService";
 import { getStudentProfile } from "../services/studentPortalService";
 
@@ -44,8 +45,9 @@ function Navbar() {
 
   return (
     <nav className="navbar navbar-dark bg-dark px-3" style={{ minHeight: 52 }}>
-      <span className="navbar-brand mb-0 fw-bold" style={{ letterSpacing: "-0.01em" }}>
-        🎓 PRMS — Placement Record Management System
+      <span className="navbar-brand mb-0 fw-bold d-flex align-items-center gap-2" style={{ letterSpacing: "-0.01em" }}>
+        <GraduationCap size={20} />
+        PRMS — Placement Record Management System
       </span>
 
       {username && (

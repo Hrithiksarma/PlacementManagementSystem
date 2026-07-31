@@ -179,6 +179,9 @@ public class StudentPortalServiceImpl implements StudentPortalService {
         dto.setActiveBacklogs(s.getActiveBacklogs());
         dto.setPlacementTier(s.getPlacementTier());
         dto.setPlacementStatus(isPlaced(s) ? "Placed" : "Not Placed");
+        dto.setPhotoUrl(s.getPhotoUrl());
+        dto.setResumeUrl(s.getResumeUrl());
+        dto.setGradeSheetUrl(s.getGradeSheetUrl());
         return dto;
     }
 

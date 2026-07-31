@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Lock, ArrowLeft } from "lucide-react";
 import { getRole } from "../services/authService";
 import "./AccessDenied.css";
 
@@ -16,7 +17,9 @@ function AccessDenied() {
   return (
     <div className="access-denied-page">
       <div className="access-denied-card">
-        <div className="access-denied-icon">🔒</div>
+        <div className="access-denied-icon d-flex justify-content-center">
+          <Lock size={52} strokeWidth={1.6} />
+        </div>
         <h1 className="access-denied-title">Access Denied</h1>
         <p className="access-denied-message">
           Your account (<strong>{roleLabel}</strong>) does not have permission to view
@@ -26,8 +29,9 @@ function AccessDenied() {
           If you believe this is a mistake, please contact your system administrator.
         </p>
         <div className="access-denied-actions">
-          <button className="btn-go-dashboard" onClick={() => navigate("/")}>
-            ← Go to Dashboard
+          <button className="btn-go-dashboard d-inline-flex align-items-center justify-content-center gap-1" onClick={() => navigate("/")}>
+            <ArrowLeft size={14} />
+            Go to Dashboard
           </button>
           <button className="btn-go-back" onClick={() => navigate(-1)}>
             Go Back

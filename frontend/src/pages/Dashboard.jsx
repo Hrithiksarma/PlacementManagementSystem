@@ -4,6 +4,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell as BarCell,
   LineChart, Line, ReferenceLine,
 } from "recharts";
+import {
+  Users, Building2, Briefcase, FileText, CheckCircle2, CalendarDays, XCircle,
+  Trophy, BarChart3, TrendingDown, TrendingUp, Medal, Star, Pin, AlertTriangle,
+  ChevronUp, ChevronDown, Hourglass, SlidersHorizontal, X,
+} from "lucide-react";
 import Layout from "../components/Layout";
 import { getDashboardData } from "../services/dashboardService";
 import "./Dashboard.css";
@@ -25,14 +30,6 @@ const STATUS_COLOR = {
   "Interview Scheduled":   "#d97706",
   "Applied":               "#2563eb",
   "Rejected":              "#dc2626",
-};
-
-const STATUS_EMOJI = {
-  "Selected":            "🟢",
-  "First Round":         "🟣",
-  "Interview Scheduled": "🟡",
-  "Applied":             "🔵",
-  "Rejected":            "🔴",
 };
 
 const PROGRAMS = ["All", "B.Tech", "M.Tech", "PhD"];
@@ -154,7 +151,7 @@ function TierBadge({ tier }) {
 function EmptyState({ message }) {
   return (
     <div className="empty-chart-state">
-      <span className="empty-chart-icon">📊</span>
+      <BarChart3 className="empty-chart-icon" size={32} strokeWidth={1.6} />
       <p>{message ?? "No data available yet"}</p>
     </div>
   );
@@ -182,7 +179,7 @@ function KpiCard({ icon, label, value, accent, sub }) {
 function PlacementRateCard({ placed, total, percentage }) {
   return (
     <div className="kpi-card" style={{ "--kpi-accent": "#16a34a" }}>
-      <div className="kpi-icon-wrap">📈</div>
+      <div className="kpi-icon-wrap"><TrendingUp size={20} /></div>
       <div className="kpi-body">
         <div className="kpi-value" style={{ color: "#16a34a" }}>
           {fmt(percentage, 1)}%
@@ -261,7 +258,7 @@ function FilterBar({ filters, onChange, onClear, availableYears, availableBranch
   return (
     <div className={`dash-filter-bar${active ? " dash-filter-bar--active" : ""}`}>
       <div className="filter-bar-label">
-        <span>⚙</span> Filters
+        <SlidersHorizontal size={13} /> Filters
         {active && <span className="filter-active-dot" />}
       </div>
 
@@ -298,8 +295,9 @@ function FilterBar({ filters, onChange, onClear, availableYears, availableBranch
 
       <div className="filter-actions">
         {active && (
-          <button className="filter-btn-clear" onClick={onClear}>
-            Clear Filters ✕
+          <button className="filter-btn-clear d-inline-flex align-items-center gap-1" onClick={onClear}>
+            Clear Filters
+            <X size={12} />
           </button>
         )}
         {active && (
@@ -429,15 +427,15 @@ function Dashboard() {
 
         {/* ── Row 1 · KPI Grid ─────────────────────────────────────────── */}
         <div className="dash-row kpi-grid">
-          <KpiCard icon="👥" label="Total Students"
+          <KpiCard icon={<Users size={20} />} label="Total Students"
             value={fmt(data.totalStudents)} accent="#2563eb" />
-          <KpiCard icon="🏢" label="Companies"
+          <KpiCard icon={<Building2 size={20} />} label="Companies"
             value={fmt(data.totalCompanies)} accent="#7c3aed" />
-          <KpiCard icon="📋" label="Drives"
+          <KpiCard icon={<Briefcase size={20} />} label="Drives"
             value={fmt(data.totalDrives)} accent="#0891b2" />
-          <KpiCard icon="📄" label="Applications"
+          <KpiCard icon={<FileText size={20} />} label="Applications"
             value={fmt(data.totalApplications)} accent="#ea580c" />
-          <KpiCard icon="✅" label="Placed Students"
+          <KpiCard icon={<CheckCircle2 size={20} />} label="Placed Students"
             value={fmt(data.totalPlacedStudents)} accent="#16a34a" />
           <PlacementRateCard
             placed={data.totalPlacedStudents}
@@ -482,22 +480,22 @@ function Dashboard() {
           <div className="dash-card">
             <SectionHeader title="Drive Statistics" sub={`${data.totalDrives} total`} />
             <div className="stat-grid-3">
-              <StatCard label="Upcoming"  value={data.upcomingDrives}  accent="#2563eb" icon="🗓️" />
-              <StatCard label="Completed" value={data.completedDrives} accent="#16a34a" icon="✅" />
-              <StatCard label="Cancelled" value={data.cancelledDrives} accent="#dc2626" icon="❌" />
+              <StatCard label="Upcoming"  value={data.upcomingDrives}  accent="#2563eb" icon={<CalendarDays size={18} />} />
+              <StatCard label="Completed" value={data.completedDrives} accent="#16a34a" icon={<CheckCircle2 size={18} />} />
+              <StatCard label="Cancelled" value={data.cancelledDrives} accent="#dc2626" icon={<XCircle size={18} />} />
             </div>
             <div className="dash-divider" />
             <SectionHeader title="Package Analytics" sub="All drives" />
             <div className="stat-grid-3">
               <StatCard label="Highest"
                 value={data.highestPackage > 0 ? `${data.highestPackage} LPA` : "—"}
-                accent="#7c3aed" icon="🏆" />
+                accent="#7c3aed" icon={<Trophy size={18} />} />
               <StatCard label="Average"
                 value={data.averagePackage > 0 ? `${fmt(data.averagePackage, 1)} LPA` : "—"}
-                accent="#0891b2" icon="📊" />
+                accent="#0891b2" icon={<BarChart3 size={18} />} />
               <StatCard label="Median"
                 value={data.medianPackage > 0 ? `${fmt(data.medianPackage, 1)} LPA` : "—"}
-                accent="#ea580c" icon="📉" />
+                accent="#ea580c" icon={<TrendingDown size={18} />} />
             </div>
           </div>
         </div>
@@ -603,7 +601,10 @@ function Dashboard() {
                     <div key={r.companyName}
                       className={`recruiter-row${i === 0 ? " recruiter-row--top" : ""}`}>
                       <span className="recruiter-rank">
-                        {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                        {i === 0 ? <Medal size={16} color="#eab308" />
+                          : i === 1 ? <Medal size={16} color="#94a3b8" />
+                          : i === 2 ? <Medal size={16} color="#b45309" />
+                          : i + 1}
                       </span>
                       <span className="recruiter-name">{r.companyName}</span>
                       <span className="recruiter-tier"><TierBadge tier={r.tier} /></span>
@@ -617,9 +618,10 @@ function Dashboard() {
                     Total Recruiters: <strong>{data.topRecruiters.length}</strong>
                   </span>
                   {(data.topRecruiters?.length ?? 0) > 5 && (
-                    <button className="view-all-btn"
+                    <button className="view-all-btn d-inline-flex align-items-center gap-1"
                       onClick={() => setShowAllRecruiters((v) => !v)}>
-                      {showAllRecruiters ? "Show Less ▲" : `View All ${data.topRecruiters.length} ▼`}
+                      {showAllRecruiters ? "Show Less" : `View All ${data.topRecruiters.length}`}
+                      {showAllRecruiters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                     </button>
                   )}
                 </div>
@@ -640,9 +642,13 @@ function Dashboard() {
               <div className="activity-feed">
                 {data.recentActivities.map((a, i) => (
                   <div key={i} className="activity-item">
-                    <span className="activity-status-icon">
-                      {STATUS_EMOJI[a.status] ?? "⚪"}
-                    </span>
+                    <span
+                      className="activity-status-icon"
+                      style={{
+                        display: "inline-block", width: 9, height: 9, borderRadius: "50%",
+                        background: STATUS_COLOR[a.status] ?? "#94a3b8",
+                      }}
+                    />
                     <div className="activity-body">
                       <span className="activity-student">{a.studentName}</span>
                       <span className="activity-connector">
@@ -680,7 +686,7 @@ function Dashboard() {
           />
           <div className="insights-grid">
             <InsightItem
-              icon="🏆"
+              icon={<Trophy size={18} />}
               label="Highest Placement Branch"
               value={topBranch
                 ? `${topBranch.branch} (${topBranch.placementPercentage}%)`
@@ -688,7 +694,7 @@ function Dashboard() {
               accent="#2563eb"
             />
             <InsightItem
-              icon="🥇"
+              icon={<Medal size={18} color="#eab308" />}
               label="Top Recruiter"
               value={topRecruiter
                 ? `${topRecruiter.companyName} (${topRecruiter.studentsHired} hires)`
@@ -696,7 +702,7 @@ function Dashboard() {
               accent="#7c3aed"
             />
             <InsightItem
-              icon="📌"
+              icon={<Pin size={18} />}
               label="Most Applied Company"
               value={data.mostAppliedCompanyName
                 ? `${data.mostAppliedCompanyName} (${data.mostAppliedCompanyCount} applications)`
@@ -704,13 +710,13 @@ function Dashboard() {
               accent="#ea580c"
             />
             <InsightItem
-              icon="📈"
+              icon={<TrendingUp size={18} />}
               label="Placement Rate"
               value={`${fmt(data.placementPercentage, 1)}%`}
               accent="#16a34a"
             />
             <InsightItem
-              icon="⏳"
+              icon={<Hourglass size={18} />}
               label="Students Remaining"
               value={fmt(data.totalStudents - data.totalPlacedStudents)}
               accent="#d97706"
@@ -730,28 +736,28 @@ function Dashboard() {
               label="No Active Backlogs"
               value={data.noBacklogStudents}
               accent="#16a34a"
-              icon="✅"
+              icon={<CheckCircle2 size={18} />}
               tooltip="Students whose current active backlog count is zero"
             />
             <StatCard
               label="Tier B Eligible (CGPA ≥ 7.0)"
               value={data.dreamEligibleStudents}
               accent="#16a34a"
-              icon="🌟"
+              icon={<Star size={18} />}
               tooltip="Students with CGPA ≥ 7.0 and no active backlogs"
             />
             <StatCard
               label="Tier C Eligible (CGPA ≥ 8.5)"
               value={data.superDreamEligibleStudents}
               accent="#7c3aed"
-              icon="🏆"
+              icon={<Trophy size={18} />}
               tooltip="Students with CGPA ≥ 8.5 and no active backlogs"
             />
             <StatCard
               label="Students with Backlogs"
               value={data.studentsWithBacklogs}
               accent="#dc2626"
-              icon="⚠️"
+              icon={<AlertTriangle size={18} />}
               tooltip="Students having one or more active backlogs"
             />
           </div>

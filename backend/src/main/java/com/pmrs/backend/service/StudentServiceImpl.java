@@ -2,12 +2,14 @@ package com.pmrs.backend.service;
 
 import com.pmrs.backend.dto.BackfillResultDTO;
 import com.pmrs.backend.entity.Department;
+import com.pmrs.backend.entity.PlacementPenalty;
 import com.pmrs.backend.entity.Role;
 import com.pmrs.backend.entity.Student;
 import com.pmrs.backend.entity.StudentFormSubmission;
 import com.pmrs.backend.entity.User;
 import com.pmrs.backend.exception.ResourceNotFoundException;
 import com.pmrs.backend.repository.DepartmentRepository;
+import com.pmrs.backend.repository.PlacementPenaltyRepository;
 import com.pmrs.backend.repository.StudentRepository;
 import com.pmrs.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,25 +25,28 @@ public class StudentServiceImpl implements StudentService {
     private static final java.util.regex.Pattern ROLL_NO_PATTERN =
             java.util.regex.Pattern.compile("^[0-9]{7}$");
 
-    private final StudentRepository    studentRepository;
-    private final DepartmentRepository departmentRepository;
-    private final RollNumberService    rollNumberService;
-    private final UserRepository       userRepository;
-    private final PasswordEncoder      passwordEncoder;
-    private final WelcomeEmailService  welcomeEmailService;
+    private final StudentRepository          studentRepository;
+    private final DepartmentRepository       departmentRepository;
+    private final RollNumberService          rollNumberService;
+    private final UserRepository             userRepository;
+    private final PasswordEncoder            passwordEncoder;
+    private final WelcomeEmailService        welcomeEmailService;
+    private final PlacementPenaltyRepository placementPenaltyRepository;
 
-    public StudentServiceImpl(StudentRepository    studentRepository,
-                               DepartmentRepository departmentRepository,
-                               RollNumberService    rollNumberService,
-                               UserRepository       userRepository,
-                               PasswordEncoder      passwordEncoder,
-                               WelcomeEmailService  welcomeEmailService) {
-        this.studentRepository    = studentRepository;
-        this.departmentRepository = departmentRepository;
-        this.rollNumberService    = rollNumberService;
-        this.userRepository       = userRepository;
-        this.passwordEncoder      = passwordEncoder;
-        this.welcomeEmailService  = welcomeEmailService;
+    public StudentServiceImpl(StudentRepository          studentRepository,
+                               DepartmentRepository       departmentRepository,
+                               RollNumberService          rollNumberService,
+                               UserRepository             userRepository,
+                               PasswordEncoder            passwordEncoder,
+                               WelcomeEmailService        welcomeEmailService,
+                               PlacementPenaltyRepository placementPenaltyRepository) {
+        this.studentRepository          = studentRepository;
+        this.departmentRepository       = departmentRepository;
+        this.rollNumberService          = rollNumberService;
+        this.userRepository             = userRepository;
+        this.passwordEncoder            = passwordEncoder;
+        this.welcomeEmailService        = welcomeEmailService;
+        this.placementPenaltyRepository = placementPenaltyRepository;
     }
 
     @Override
@@ -102,10 +107,32 @@ public class StudentServiceImpl implements StudentService {
         return studentRepository.save(existing);
     }
 
+    /**
+     * Lifted/expired penalties are historical records tied only to this student —
+     * once none are still active, they're cleared along with the student rather
+     * than permanently blocking deletion via the PlacementPenalties FK. An
+     * active penalty still blocks deletion; lift it first. The student's login
+     * account is also removed — User.studentId is a soft reference, not a real
+     * FK, so it would otherwise dangle and break that login's dashboard.
+     */
     @Override
+    @Transactional
     public void deleteStudent(Integer id) {
         studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
+
+        List<PlacementPenalty> penalties = placementPenaltyRepository.findByStudent_StudentId(id);
+        boolean hasActivePenalty = penalties.stream().anyMatch(PlacementPenalty::isActive);
+        if (hasActivePenalty) {
+            throw new IllegalStateException(
+                    "Cannot delete — this student has an active penalty. Lift it first.");
+        }
+        if (!penalties.isEmpty()) {
+            placementPenaltyRepository.deleteAll(penalties);
+        }
+
+        userRepository.findByStudentId(id).ifPresent(userRepository::delete);
+
         studentRepository.deleteById(id);
     }
 

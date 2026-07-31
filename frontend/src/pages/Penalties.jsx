@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CircleCheckBig } from "lucide-react";
 import Layout from "../components/Layout";
 import { getPenalties, liftPenalty } from "../services/penaltyService";
 
@@ -99,7 +100,7 @@ function Penalties() {
         <p className="text-muted">Loading…</p>
       ) : displayed.length === 0 ? (
         <div className="text-center py-5 text-muted">
-          <div style={{ fontSize: "2.5rem" }}>✅</div>
+          <CircleCheckBig size={40} color="#16a34a" style={{ marginBottom: 4 }} />
           <p className="fw-semibold mt-2 mb-1 text-dark">
             {showAll ? "No penalties on record" : "No active penalties"}
           </p>

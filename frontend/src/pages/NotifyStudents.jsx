@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { Bell, CheckCircle2 } from "lucide-react";
 import Layout from "../components/Layout";
 import {
   getAllDrives,
@@ -132,7 +133,10 @@ function NotifyStudents() {
       <div className="card mb-4">
         <div className="card-body d-flex justify-content-between align-items-center">
           <div>
-            <div className="fw-semibold">🔔 Automatic Weekly Reminders</div>
+            <div className="fw-semibold d-flex align-items-center gap-2">
+              <Bell size={15} />
+              Automatic Weekly Reminders
+            </div>
             <div className="text-muted" style={{ fontSize: "0.82rem" }}>
               {reminderSettings
                 ? `When on, eligible students are emailed automatically ${reminderSettings.daysBefore} day(s) before each drive event.`

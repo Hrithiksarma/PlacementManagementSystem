@@ -1,4 +1,5 @@
 import { useEffect, useState, Fragment } from "react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import Layout from "../components/Layout";
 import { getAllDrives, addDrive, updateDrive, updateDriveStatus, deleteDrive } from "../services/driveService";
 import { getAllCompanies } from "../services/companyService";
@@ -381,10 +382,11 @@ function Drives() {
                       <td>{drive.maxBacklogs ?? "—"}</td>
                       <td>
                         <button
-                          className="btn btn-sm btn-outline-primary"
+                          className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
                           onClick={() => setExpandedDatesId(isExpanded ? null : drive.driveId)}
                         >
-                          {isExpanded ? "Hide" : "📅 View"}
+                          {isExpanded ? <EyeOff size={13} /> : <Eye size={13} />}
+                          {isExpanded ? "Hide" : "View"}
                         </button>
                       </td>
                       <td>
@@ -415,11 +417,12 @@ function Drives() {
                           </button>
                         ) : (
                           <span
-                            className="btn btn-sm btn-outline-secondary disabled"
+                            className="btn btn-sm btn-outline-secondary disabled d-inline-flex align-items-center gap-1"
                             title="Completed drives can only be deleted by Admin"
                             style={{ cursor: "not-allowed", opacity: 0.55, fontSize: "0.75rem" }}
                           >
-                            🔒 Locked
+                            <Lock size={11} />
+                            Locked
                           </span>
                         )}
                       </td>

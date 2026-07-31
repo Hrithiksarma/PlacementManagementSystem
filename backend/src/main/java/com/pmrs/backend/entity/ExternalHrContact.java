@@ -4,18 +4,23 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * A manually-logged HR contact for a company that has no presence in PRMS
+ * yet — deliberately NOT linked to {@link Company}/{@link HRContact}. Never
+ * promoted into a real Company or Drive; it's just contact information.
+ */
 @Entity
-@Table(name = "HRContacts")
-public class HRContact {
+@Table(name = "ExternalHrContacts")
+public class ExternalHrContact {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "hr_id")
-    private Integer hrId;
+    @Column(name = "id")
+    private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "company_id")
-    private Company company;
+    @NotBlank(message = "Company name is required")
+    @Column(name = "company_name")
+    private String companyName;
 
     @NotBlank(message = "HR name is required")
     @Column(name = "hr_name")
@@ -33,26 +38,20 @@ public class HRContact {
     @Column(name = "designation")
     private String designation;
 
-    public enum Source { MANUAL, GOOGLE_FORM }
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "source")
-    private Source source = Source.MANUAL;
-
-    public Integer getHrId() {
-        return hrId;
+    public Integer getId() {
+        return id;
     }
 
-    public void setHrId(Integer hrId) {
-        this.hrId = hrId;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public Company getCompany() {
-        return company;
+    public String getCompanyName() {
+        return companyName;
     }
 
-    public void setCompany(Company company) {
-        this.company = company;
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 
     public String getHrName() {
@@ -85,13 +84,5 @@ public class HRContact {
 
     public void setDesignation(String designation) {
         this.designation = designation;
-    }
-
-    public Source getSource() {
-        return source;
-    }
-
-    public void setSource(Source source) {
-        this.source = source;
     }
 }

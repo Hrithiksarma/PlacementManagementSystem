@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GraduationCap, ExternalLink } from "lucide-react";
 import Layout from "../components/Layout";
 import {
   deleteStudent,
@@ -41,8 +42,9 @@ function DocBlock({ label, url }) {
       <div className="d-flex align-items-center gap-2 mb-1">
         <span className="fw-semibold">{label}</span>
         {url ? (
-          <a href={url} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary py-0">
-            Open in new tab ↗
+          <a href={url} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary py-0 d-inline-flex align-items-center gap-1">
+            Open in new tab
+            <ExternalLink size={11} />
           </a>
         ) : (
           <span className="text-muted" style={{ fontSize: "0.85rem" }}>Not provided</span>
@@ -298,7 +300,7 @@ function Students() {
       if (hasSearched) handleSearch();
     } catch (err) {
       console.error(err);
-      alert("Failed to delete student");
+      alert(err.response?.data?.message ?? "Failed to delete student");
     }
   };
 
@@ -318,7 +320,8 @@ function Students() {
             className="text-muted d-flex align-items-center gap-1"
             style={{ fontSize: "0.82rem" }}
           >
-            🎓 Students register through the Google Form (Forms → Students)
+            <GraduationCap size={13} />
+            Students register through the Google Form (Forms → Students)
           </span>
         </div>
       )}

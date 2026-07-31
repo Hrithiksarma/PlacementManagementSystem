@@ -170,6 +170,8 @@ public class DriveFormServiceImpl implements DriveFormService {
         contact.setHrName(name);
         contact.setHrEmail(email);
         contact.setHrPhone(phone);
+        contact.setDesignation(blankToNull(submission.getDesignation()));
+        contact.setSource(HRContact.Source.GOOGLE_FORM);
         return hrContactRepository.save(contact);
     }
 

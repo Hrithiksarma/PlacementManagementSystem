@@ -1,5 +1,6 @@
 package com.pmrs.backend.controller;
 
+import com.pmrs.backend.dto.HrContactSearchResult;
 import com.pmrs.backend.entity.HRContact;
 import com.pmrs.backend.service.HRContactService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +38,16 @@ public class HRContactController {
     @GetMapping("/company/{companyId}")
     public List<HRContact> getHRContactsByCompany(@PathVariable Integer companyId) {
         return hrContactService.getHRContactsByCompanyId(companyId);
+    }
+
+    @Operation(summary = "Search HR contacts by company name (merges real HRContact rows with external, non-PRMS "
+            + "contacts) — omit companyName to get every HR contact")
+    @GetMapping("/search")
+    public List<HrContactSearchResult> search(@RequestParam(required = false) String companyName) {
+        if (companyName == null || companyName.isBlank()) {
+            return hrContactService.getAllMerged();
+        }
+        return hrContactService.searchByCompanyName(companyName);
     }
 
     @Operation(summary = "Create a new HR contact")

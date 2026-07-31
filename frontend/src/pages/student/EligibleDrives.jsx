@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import {
+  AlertTriangle, X, Target, CheckCircle2, IndianRupee, CalendarDays, Lock, ArrowRight,
+} from "lucide-react";
 import Layout from "../../components/Layout";
 import { getEligibleDrives, applyToDrive, getPenaltyStatus } from "../../services/studentPortalService";
 import "./EligibleDrives.css";
@@ -150,7 +153,7 @@ function EligibleDrives() {
         {/* ── Active penalty banner ──────────────────────────────────── */}
         {penalty?.barred && (
           <div className="alert alert-warning d-flex align-items-center py-2 mb-3">
-            <span className="me-2">⚠️</span>
+            <AlertTriangle size={16} className="me-2 flex-shrink-0" />
             <span className="flex-grow-1">{penalty.message}</span>
           </div>
         )}
@@ -189,9 +192,10 @@ function EligibleDrives() {
             </select>
           </div>
           {(filterTier !== "All" || filterStatus !== "All") && (
-            <button className="ed-filter-clear"
+            <button className="ed-filter-clear d-inline-flex align-items-center gap-1"
               onClick={() => { setFilterTier("All"); setFilterStatus("All"); }}>
-              Clear ✕
+              Clear
+              <X size={12} />
             </button>
           )}
         </div>
@@ -199,7 +203,7 @@ function EligibleDrives() {
         {/* ── Drive Cards ─────────────────────────────────────────────── */}
         {filtered.length === 0 ? (
           <div className="ed-empty">
-            <span className="ed-empty-icon">🎯</span>
+            <span className="ed-empty-icon"><Target size={32} strokeWidth={1.6} /></span>
             <p>No drives found for the selected filters.</p>
           </div>
         ) : (
@@ -220,7 +224,9 @@ function EligibleDrives() {
                       {d.companyTier && <TierBadge tier={d.companyTier} />}
                       {d.driveStatus && <DriveStatusBadge status={d.driveStatus} />}
                       {d.alreadyApplied && (
-                        <span className="ed-applied-badge">✓ Applied</span>
+                        <span className="ed-applied-badge d-inline-flex align-items-center gap-1">
+                          <CheckCircle2 size={12} />Applied
+                        </span>
                       )}
                     </div>
                   </div>
@@ -235,16 +241,17 @@ function EligibleDrives() {
                       An upgradation-policy block stays quiet here; its explanation
                       surfaces as a toast if the student actually tries to apply. */}
                   {blocked && !d.alreadyApplied && d.eligibilityReason && (
-                    <div className="ed-ineligible-reason">
-                      ⚠ {d.eligibilityReason}
+                    <div className="ed-ineligible-reason d-flex align-items-start gap-1">
+                      <AlertTriangle size={13} className="flex-shrink-0" />
+                      {d.eligibilityReason}
                     </div>
                   )}
 
                   {/* Criteria chips */}
                   <div className="ed-criteria-row">
                     {d.packageLpa != null && (
-                      <span className="ed-crit ed-crit-pkg">
-                        💰 {d.packageLpa} LPA
+                      <span className="ed-crit ed-crit-pkg d-inline-flex align-items-center gap-1">
+                        <IndianRupee size={11} />{d.packageLpa} LPA
                       </span>
                     )}
                     {d.minCgpa != null && (
@@ -254,23 +261,31 @@ function EligibleDrives() {
                       <span className="ed-crit">Max Backlogs {d.maxBacklogs}</span>
                     )}
                     {d.driveDate && (
-                      <span className="ed-crit">📅 {formatDate(d.driveDate)}</span>
+                      <span className="ed-crit d-inline-flex align-items-center gap-1">
+                        <CalendarDays size={11} />{formatDate(d.driveDate)}
+                      </span>
                     )}
                   </div>
 
                   {/* Action */}
                   <div className="ed-card-footer">
                     {d.alreadyApplied ? (
-                      <span className="ed-applied-msg">✅ Application Submitted</span>
+                      <span className="ed-applied-msg d-inline-flex align-items-center gap-1">
+                        <CheckCircle2 size={13} />Application Submitted
+                      </span>
                     ) : isCompleted ? (
-                      <span className="ed-closed-msg">🔒 Applications Closed</span>
+                      <span className="ed-closed-msg d-inline-flex align-items-center gap-1">
+                        <Lock size={13} />Applications Closed
+                      </span>
                     ) : (
                       <button
-                        className="ed-apply-btn"
+                        className="ed-apply-btn d-inline-flex align-items-center justify-content-center gap-1"
                         disabled={blocked || applying === d.driveId}
                         onClick={() => handleApply(d.driveId)}
                       >
-                        {applying === d.driveId ? "Submitting…" : "Apply Now →"}
+                        {applying === d.driveId
+                          ? "Submitting…"
+                          : <>Apply Now<ArrowRight size={13} /></>}
                       </button>
                     )}
                   </div>

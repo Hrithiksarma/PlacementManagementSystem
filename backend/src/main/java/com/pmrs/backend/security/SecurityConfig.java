@@ -75,8 +75,8 @@ public class SecurityConfig {
                 // ── Withdrawal/decline penalties: review + lift → both roles ──
                 .requestMatchers("/penalties/**").hasAnyRole("ADMIN", "PLACEMENT_OFFICER")
 
-                // ── Applications: resend-email action allowed for staff…
-                .requestMatchers(HttpMethod.POST, "/applications/*/resend-selection-email")
+                // ── Applications: status-email action allowed for staff…
+                .requestMatchers(HttpMethod.POST, "/applications/*/send-status-email")
                     .hasAnyRole("ADMIN", "PLACEMENT_OFFICER")
                 // …but application creation stays blocked (only via /api/student/apply)
                 .requestMatchers(HttpMethod.POST, "/applications/**").denyAll()
@@ -88,6 +88,9 @@ public class SecurityConfig {
 
                 // ── Admin-only: officer account management, never PLACEMENT_OFFICER ──
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                // ── External (non-PRMS) HR contacts: same staff access as HR contacts ──
+                .requestMatchers("/external-hrcontacts/**").hasAnyRole("ADMIN", "PLACEMENT_OFFICER")
 
                 // ── Supporting data ────────────────────────────────────────
                 .requestMatchers("/departments/**", "/hrcontacts/**",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
 import Layout from "../components/Layout";
 import {
   getOfficers,
@@ -140,11 +141,12 @@ function ManageOfficers() {
                 />
                 {emailError && <div className="alert alert-danger py-2">{emailError}</div>}
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary d-inline-flex align-items-center gap-1"
                   onClick={handleSendWelcomeEmail}
                   disabled={sendingEmail || emailSent}
                 >
-                  {emailSent ? "Email Sent ✓" : sendingEmail ? "Sending…" : "Send Mail"}
+                  {emailSent && <CheckCircle2 size={13} />}
+                  {emailSent ? "Email Sent" : sendingEmail ? "Sending…" : "Send Mail"}
                 </button>
                 {emailSent && (
                   <div className="text-success mt-2" style={{ fontSize: "0.85rem" }}>

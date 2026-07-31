@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  Mail, Target, FileText, Star, CalendarDays, Trophy, ClipboardList, User,
+  PartyPopper, Sparkles, ArrowRight,
+} from "lucide-react";
 import Layout from "../../components/Layout";
 import {
   getStudentProfile,
@@ -141,14 +145,14 @@ function StudentDashboard() {
               const hasPending = !placed && apps.some((a) => a.status === "Selected");
               const label  = placed
                 ? `Placed (${TIER_LABEL[profile.placementTier] ?? profile.placementTier})`
-                : hasPending ? "📩 Offer Pending"
+                : hasPending ? <><Mail size={12} /> Offer Pending</>
                 : "Not Placed";
               const bg = placed
                 ? (PLACEMENT_COLOR[profile.placementTier] ?? "#475569")
                 : hasPending ? "#d97706"
                 : "#475569";
               return (
-                <span className="sd-tier-badge" style={{ background: bg }}>
+                <span className="sd-tier-badge d-inline-flex align-items-center gap-1" style={{ background: bg }}>
                   {label}
                 </span>
               );
@@ -159,31 +163,31 @@ function StudentDashboard() {
         {/* ── Stat Cards ─────────────────────────────────────────────────── */}
         <div className="sd-stat-grid">
           <StatCard
-            icon="🎯" label="Eligible Drives"
+            icon={<Target size={20} />} label="Eligible Drives"
             value={eligibleCount}
             accent="#2563eb"
             to="/student/eligible-drives"
           />
           <StatCard
-            icon="📄" label="Applied"
+            icon={<FileText size={20} />} label="Applied"
             value={apps.length}
             accent="#7c3aed"
             to="/student/applications"
           />
           <StatCard
-            icon="⭐" label="First Round"
+            icon={<Star size={20} />} label="First Round"
             value={firstRoundCount}
             accent="#d97706"
             to="/student/applications"
           />
           <StatCard
-            icon="📅" label="Interviews"
+            icon={<CalendarDays size={20} />} label="Interviews"
             value={interviewCount}
             accent="#ea580c"
             to="/student/applications"
           />
           <StatCard
-            icon="🏆" label="Offers"
+            icon={<Trophy size={20} />} label="Offers"
             value={offersCount}
             accent="#16a34a"
             to="/student/placement-status"
@@ -194,17 +198,17 @@ function StudentDashboard() {
         <div className="sd-section-card">
           <div className="sd-section-head">Quick Actions</div>
           <div className="sd-quick-links">
-            <Link to="/student/eligible-drives"  className="sd-quick-btn sd-qb-blue">
-              🎯 Browse Drives
+            <Link to="/student/eligible-drives"  className="sd-quick-btn sd-qb-blue d-inline-flex align-items-center gap-2">
+              <Target size={15} />Browse Drives
             </Link>
-            <Link to="/student/applications"     className="sd-quick-btn sd-qb-purple">
-              📋 My Applications
+            <Link to="/student/applications"     className="sd-quick-btn sd-qb-purple d-inline-flex align-items-center gap-2">
+              <ClipboardList size={15} />My Applications
             </Link>
-            <Link to="/student/profile"          className="sd-quick-btn sd-qb-slate">
-              👤 View Profile
+            <Link to="/student/profile"          className="sd-quick-btn sd-qb-slate d-inline-flex align-items-center gap-2">
+              <User size={15} />View Profile
             </Link>
-            <Link to="/student/placement-status" className="sd-quick-btn sd-qb-green">
-              🏆 Placement Status
+            <Link to="/student/placement-status" className="sd-quick-btn sd-qb-green d-inline-flex align-items-center gap-2">
+              <Trophy size={15} />Placement Status
             </Link>
           </div>
         </div>
@@ -212,13 +216,14 @@ function StudentDashboard() {
         {/* ── Recent Placement Achievements (public — Selected only) ──────── */}
         {achievements.length > 0 && (
           <div className="sd-section-card">
-            <div className="sd-section-head">
-              🎉 Recent Placement Achievements
+            <div className="sd-section-head d-flex align-items-center gap-2">
+              <PartyPopper size={16} />
+              Recent Placement Achievements
             </div>
             <div className="sd-achievement-list">
               {achievements.map((a, i) => (
                 <div key={i} className="sd-achievement-row">
-                  <div className="sd-achievement-icon">🎊</div>
+                  <div className="sd-achievement-icon"><Sparkles size={16} color="#7c3aed" /></div>
                   <div className="sd-achievement-body">
                     <span className="sd-achievement-name">{a.studentName}</span>
                     <span className="sd-achievement-text"> selected at </span>
@@ -270,8 +275,8 @@ function StudentDashboard() {
                   {d.packageLpa && (
                     <span className="sd-drive-pkg">{d.packageLpa} LPA</span>
                   )}
-                  <Link to="/student/eligible-drives" className="sd-apply-link">
-                    Apply →
+                  <Link to="/student/eligible-drives" className="sd-apply-link d-inline-flex align-items-center gap-1">
+                    Apply<ArrowRight size={12} />
                   </Link>
                 </div>
               ))}

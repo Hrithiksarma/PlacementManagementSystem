@@ -1,9 +1,10 @@
 package com.pmrs.backend.controller;
 
+import com.pmrs.backend.dto.ApplicationEmailRequest;
 import com.pmrs.backend.dto.StatusUpdateRequest;
 import com.pmrs.backend.entity.Application;
 import com.pmrs.backend.service.ApplicationService;
-import com.pmrs.backend.service.SelectionEmailService;
+import com.pmrs.backend.service.ApplicationStatusEmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Tag(name = "Application APIs", description = "Operations related to placement applications")
 @RestController
@@ -18,13 +20,16 @@ import java.util.Map;
 @CrossOrigin("*")
 public class ApplicationController {
 
+    private static final Set<String> EMAILABLE_STATUSES =
+            Set.of("First Round", "Interview Scheduled", "Selected", "Rejected");
+
     private final ApplicationService applicationService;
-    private final SelectionEmailService selectionEmailService;
+    private final ApplicationStatusEmailService applicationStatusEmailService;
 
     public ApplicationController(ApplicationService applicationService,
-                                 SelectionEmailService selectionEmailService) {
+                                 ApplicationStatusEmailService applicationStatusEmailService) {
         this.applicationService = applicationService;
-        this.selectionEmailService = selectionEmailService;
+        this.applicationStatusEmailService = applicationStatusEmailService;
     }
 
     @Operation(summary = "Get all applications")
@@ -84,16 +89,22 @@ public class ApplicationController {
         return ResponseEntity.ok(applicationService.updateStatus(id, req.getStatus()));
     }
 
-    @Operation(summary = "Resend the selection congratulations email")
-    @PostMapping("/{id}/resend-selection-email")
-    public ResponseEntity<?> resendSelectionEmail(@PathVariable Integer id) {
+    @Operation(summary = "Send a stage-appropriate status update email, with an admin comment")
+    @PostMapping("/{id}/send-status-email")
+    public ResponseEntity<?> sendStatusEmail(@PathVariable Integer id,
+                                              @RequestBody(required = false) ApplicationEmailRequest request) {
         Application app = applicationService.getApplicationById(id);
-        if (!"Selected".equals(app.getStatus())) {
+        if (!EMAILABLE_STATUSES.contains(app.getStatus())) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Application is not Selected."));
+                    .body(Map.of("message", "No email available for status: " + app.getStatus()));
         }
-        selectionEmailService.sendSelectionEmail(app);
-        return ResponseEntity.ok(Map.of("message", "Email queued for resend."));
+        if (app.getStatus().equals(app.getLastEmailStatus())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "An email has already been sent for this status."));
+        }
+        String comment = request != null ? request.getComment() : null;
+        applicationStatusEmailService.sendStatusEmail(app, comment);
+        return ResponseEntity.ok(Map.of("message", "Email queued for sending."));
     }
 
     @Operation(summary = "Delete application by ID")

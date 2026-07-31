@@ -23,16 +23,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final StudentRepository studentRepository;
     private final DriveRepository driveRepository;
-    private final SelectionEmailService selectionEmailService;
 
     public ApplicationServiceImpl(ApplicationRepository applicationRepository,
                                   StudentRepository studentRepository,
-                                  DriveRepository driveRepository,
-                                  SelectionEmailService selectionEmailService) {
+                                  DriveRepository driveRepository) {
         this.applicationRepository = applicationRepository;
         this.studentRepository = studentRepository;
         this.driveRepository = driveRepository;
-        this.selectionEmailService = selectionEmailService;
     }
 
     @Override
@@ -157,12 +154,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             app.setOfferReleasedAt(LocalDateTime.now());
         }
         applicationRepository.save(app);
-
-        // Fire the congratulations email once, after the save. It's @Async and
-        // swallows its own exceptions, so it can't fail this transaction.
-        if (justSelected) {
-            selectionEmailService.sendSelectionEmail(app);
-        }
 
         return applicationRepository.findById(app.getApplicationId()).orElse(app);
     }

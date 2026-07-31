@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  FileText, Star, CalendarDays, Mail, CheckCircle2, Undo2, Ban, XCircle,
+  XOctagon, Check, X, Minus, ClipboardList, IndianRupee, AlertTriangle, Info,
+} from "lucide-react";
 import Layout from "../../components/Layout";
 import {
   getStudentApplications,
@@ -19,15 +23,15 @@ const PIPELINE = [
 // "Selected" IS the job offer (no separate Offer Released stage) — it's
 // where the Accept/Reject decision banner appears.
 const STATUS_META = {
-  Applied:               { color: "#2563eb", bg: "#eff6ff",  icon: "📝" },
-  "First Round":         { color: "#7c3aed", bg: "#f5f3ff",  icon: "⭐" },
-  "Interview Scheduled": { color: "#d97706", bg: "#fffbeb",  icon: "📅" },
-  Selected:              { color: "#78350f", bg: "#fffbeb",  icon: "📩" },
-  "Offer Accepted":      { color: "#16a34a", bg: "#f0fdf4",  icon: "✅" },
-  "Offer Rejected":      { color: "#ea580c", bg: "#fff7ed",  icon: "↩️" },
-  "Offer Declined":      { color: "#be123c", bg: "#fff1f2",  icon: "⛔" },
-  Rejected:              { color: "#dc2626", bg: "#fef2f2",  icon: "❌" },
-  Withdrawn:             { color: "#64748b", bg: "#f8fafc",  icon: "🚫" },
+  Applied:               { color: "#2563eb", bg: "#eff6ff",  icon: <FileText size={12} /> },
+  "First Round":         { color: "#7c3aed", bg: "#f5f3ff",  icon: <Star size={12} /> },
+  "Interview Scheduled": { color: "#d97706", bg: "#fffbeb",  icon: <CalendarDays size={12} /> },
+  Selected:              { color: "#78350f", bg: "#fffbeb",  icon: <Mail size={12} /> },
+  "Offer Accepted":      { color: "#16a34a", bg: "#f0fdf4",  icon: <CheckCircle2 size={12} /> },
+  "Offer Rejected":      { color: "#ea580c", bg: "#fff7ed",  icon: <Undo2 size={12} /> },
+  "Offer Declined":      { color: "#be123c", bg: "#fff1f2",  icon: <Ban size={12} /> },
+  Rejected:              { color: "#dc2626", bg: "#fef2f2",  icon: <XCircle size={12} /> },
+  Withdrawn:             { color: "#64748b", bg: "#f8fafc",  icon: <XOctagon size={12} /> },
 };
 
 const TIER_COLOR = {
@@ -59,7 +63,7 @@ function StatusTimeline({ status }) {
               isDone    ? "ma-dot-done"   :
               isTerminal && i === 0 ? "ma-dot-done" : "ma-dot-future"
             }`}>
-              {isDone || (isTerminal && i === 0) ? "✓" : i + 1}
+              {isDone || (isTerminal && i === 0) ? <Check size={12} /> : i + 1}
             </div>
             {i < PIPELINE.length - 1 && (
               <div className={`ma-step-line ${isDone ? "ma-line-done" : "ma-line-future"}`} />
@@ -73,25 +77,25 @@ function StatusTimeline({ status }) {
 
       {isRejected && (
         <div className="ma-timeline-step">
-          <div className="ma-step-dot ma-dot-rejected">✕</div>
+          <div className="ma-step-dot ma-dot-rejected"><X size={12} /></div>
           <div className="ma-step-label ma-label-rejected">Rejected</div>
         </div>
       )}
       {isOfferRejected && (
         <div className="ma-timeline-step">
-          <div className="ma-step-dot" style={{ background: "#ea580c", color: "#fff", border: "none" }}>↩</div>
+          <div className="ma-step-dot" style={{ background: "#ea580c", color: "#fff", border: "none" }}><Undo2 size={12} /></div>
           <div className="ma-step-label" style={{ color: "#ea580c" }}>Offer Rejected</div>
         </div>
       )}
       {isWithdrawn && (
         <div className="ma-timeline-step">
-          <div className="ma-step-dot" style={{ background: "#94a3b8", color: "#fff", border: "none" }}>–</div>
+          <div className="ma-step-dot" style={{ background: "#94a3b8", color: "#fff", border: "none" }}><Minus size={12} /></div>
           <div className="ma-step-label" style={{ color: "#64748b" }}>Withdrawn</div>
         </div>
       )}
       {isOfferDeclined && (
         <div className="ma-timeline-step">
-          <div className="ma-step-dot" style={{ background: "#be123c", color: "#fff", border: "none" }}>⛔</div>
+          <div className="ma-step-dot" style={{ background: "#be123c", color: "#fff", border: "none" }}><Ban size={12} /></div>
           <div className="ma-step-label" style={{ color: "#be123c" }}>Offer Declined</div>
         </div>
       )}
@@ -214,7 +218,7 @@ function MyApplications() {
         {/* ── Toast ──────────────────────────────────────────────────── */}
         {toast && (
           <div className={`alert alert-${toast.type === "success" ? "success" : "danger"} d-flex align-items-center py-2`}>
-            <span className="me-2">{toast.type === "success" ? "✅" : "⚠️"}</span>
+            <span className="me-2">{toast.type === "success" ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}</span>
             <span className="flex-grow-1">{toast.msg}</span>
             <button className="btn-close btn-close-sm" onClick={() => setToast(null)} />
           </div>
@@ -223,7 +227,7 @@ function MyApplications() {
         {/* ── Active penalty banner ──────────────────────────────────── */}
         {penalty?.barred && (
           <div className="alert alert-warning d-flex align-items-center py-2">
-            <span className="me-2">⚠️</span>
+            <AlertTriangle size={16} className="me-2 flex-shrink-0" />
             <span className="flex-grow-1">
               {penalty.message}
               {penalty.disciplinaryReferral && (
@@ -255,7 +259,7 @@ function MyApplications() {
                   : {}}
                 onClick={() => setFilter(s)}
               >
-                {meta?.icon} {s} ({count})
+                <span className="d-inline-flex align-items-center gap-1">{meta?.icon} {s} ({count})</span>
               </button>
             );
           })}
@@ -264,7 +268,7 @@ function MyApplications() {
         {/* ── Cards ───────────────────────────────────────────────────── */}
         {displayed.length === 0 ? (
           <div className="ma-empty">
-            <span className="ma-empty-icon">📋</span>
+            <span className="ma-empty-icon"><ClipboardList size={32} strokeWidth={1.6} /></span>
             <p>{filter === "All"
               ? "You haven't applied to any drives yet."
               : `No applications with status "${filter}".`}
@@ -297,28 +301,28 @@ function MyApplications() {
                           {TIER_LABEL[app.companyTier] ?? app.companyTier}
                         </span>
                       )}
-                      <span className="ma-status-badge"
+                      <span className="ma-status-badge d-inline-flex align-items-center gap-1"
                             style={{ background: meta.bg, color: meta.color }}>
                         {meta.icon} {app.status}
                       </span>
                       {canWithdraw && (
                         <button
-                          className="btn btn-sm btn-outline-secondary"
+                          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
                           style={{ fontSize: "0.75rem" }}
                           disabled={acting === app.applicationId}
                           onClick={() => openConfirm(app, "withdraw")}
                         >
-                          {acting === app.applicationId ? "…" : "🚫 Withdraw"}
+                          {acting === app.applicationId ? "…" : <><Ban size={11} />Withdraw</>}
                         </button>
                       )}
                       {app.status === "Offer Accepted" && (
                         <button
-                          className="btn btn-sm btn-outline-danger"
+                          className="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1"
                           style={{ fontSize: "0.75rem" }}
                           disabled={acting === app.applicationId}
                           onClick={() => openConfirm(app, "decline")}
                         >
-                          {acting === app.applicationId ? "…" : "🚫 Withdraw"}
+                          {acting === app.applicationId ? "…" : <><Ban size={11} />Withdraw</>}
                         </button>
                       )}
                     </div>
@@ -328,7 +332,7 @@ function MyApplications() {
                   {isPending && (
                     <div className="ma-offer-banner">
                       <div className="ma-offer-banner-body">
-                        <span className="ma-offer-banner-icon">📩</span>
+                        <span className="ma-offer-banner-icon"><Mail size={18} /></span>
                         <div>
                           <div className="ma-offer-banner-title">Offer Available — Action Required</div>
                           {app.offerDeadline
@@ -338,18 +342,18 @@ function MyApplications() {
                       </div>
                       <div className="ma-offer-actions">
                         <button
-                          className="btn btn-sm ma-btn-accept"
+                          className="btn btn-sm ma-btn-accept d-inline-flex align-items-center gap-1"
                           disabled={acting === app.applicationId}
                           onClick={() => handleAccept(app.applicationId)}
                         >
-                          {acting === app.applicationId ? "…" : "✓ Accept Offer"}
+                          {acting === app.applicationId ? "…" : <><Check size={12} />Accept Offer</>}
                         </button>
                         <button
-                          className="btn btn-sm ma-btn-reject"
+                          className="btn btn-sm ma-btn-reject d-inline-flex align-items-center gap-1"
                           disabled={acting === app.applicationId}
                           onClick={() => openConfirm(app, "reject")}
                         >
-                          {acting === app.applicationId ? "…" : "✕ Reject"}
+                          {acting === app.applicationId ? "…" : <><X size={12} />Reject</>}
                         </button>
                       </div>
                     </div>
@@ -358,11 +362,17 @@ function MyApplications() {
                   {/* Meta chips */}
                   <div className="ma-meta-row">
                     {app.packageLpa != null && (
-                      <span className="ma-meta-chip ma-chip-pkg">💰 {app.packageLpa} LPA</span>
+                      <span className="ma-meta-chip ma-chip-pkg d-inline-flex align-items-center gap-1">
+                        <IndianRupee size={11} />{app.packageLpa} LPA
+                      </span>
                     )}
-                    <span className="ma-meta-chip">📝 Applied: {formatDate(app.applicationDate)}</span>
+                    <span className="ma-meta-chip d-inline-flex align-items-center gap-1">
+                      <FileText size={11} />Applied: {formatDate(app.applicationDate)}
+                    </span>
                     {app.driveDate && (
-                      <span className="ma-meta-chip">📅 Drive: {formatDate(app.driveDate)}</span>
+                      <span className="ma-meta-chip d-inline-flex align-items-center gap-1">
+                        <CalendarDays size={11} />Drive: {formatDate(app.driveDate)}
+                      </span>
                     )}
                   </div>
 
@@ -399,13 +409,14 @@ function MyApplications() {
                   {app.roleOffered} · current stage: <strong>{app.status}</strong>
                 </div>
 
-                <div style={{
+                <div className="d-flex align-items-start gap-2" style={{
                   background: hasPenalty ? "#fef2f2" : "#f0fdf4",
                   border: `1px solid ${hasPenalty ? "#fecaca" : "#bbf7d0"}`,
                   color: hasPenalty ? "#991b1b" : "#166534",
                   borderRadius: 8, padding: "12px 14px", fontSize: "0.88rem",
                 }}>
-                  {hasPenalty ? "⚠️ " : "ℹ️ "}{preview.message}
+                  {hasPenalty ? <AlertTriangle size={16} className="flex-shrink-0" /> : <Info size={16} className="flex-shrink-0" />}
+                  {preview.message}
                 </div>
 
                 {isPermanent && !blocked && (

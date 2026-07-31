@@ -9,6 +9,8 @@ public interface PlacementPenaltyRepository extends JpaRepository<PlacementPenal
 
     List<PlacementPenalty> findByStudent_StudentIdAndActiveTrue(Integer studentId);
 
+    List<PlacementPenalty> findByStudent_StudentId(Integer studentId);
+
     List<PlacementPenalty> findByActiveTrue();
 
     List<PlacementPenalty> findAllByOrderByPenaltyIdDesc();

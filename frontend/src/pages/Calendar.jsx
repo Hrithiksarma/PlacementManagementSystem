@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { CalendarDays, Megaphone } from "lucide-react";
 import Layout from "../components/Layout";
 import { getAllDrives } from "../services/driveService";
 import "./Calendar.css";
@@ -102,7 +103,10 @@ function Calendar() {
   return (
     <Layout>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2 className="calendar-title mb-0">🗓️ Drive Calendar</h2>
+        <h2 className="calendar-title mb-0 d-flex align-items-center gap-2">
+          <CalendarDays size={20} />
+          Drive Calendar
+        </h2>
         <div className="d-flex gap-3 align-items-center flex-wrap">
           {EVENT_TYPES.map((t) => (
             <span key={t.key} className="d-flex align-items-center gap-1" style={{ fontSize: "0.78rem" }}>
@@ -218,12 +222,13 @@ function Calendar() {
                         {e.drive.roleOffered ?? "—"}
                       </div>
                       <button
-                        className="btn btn-sm btn-outline-primary"
+                        className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
                         onClick={() => navigate("/admin/notify-students", {
                           state: { driveId: e.drive.driveId, eventType: e.type.key },
                         })}
                       >
-                        📣 Notify Students
+                        <Megaphone size={13} />
+                        Notify Students
                       </button>
                     </div>
                   ))

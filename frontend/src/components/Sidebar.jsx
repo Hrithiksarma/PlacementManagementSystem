@@ -1,25 +1,31 @@
 import { Link, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard, Users, Building2, Briefcase, CalendarDays, Megaphone,
+  FileText, ClipboardList, Scale, ShieldCheck, User, Target, Trophy, Contact,
+} from "lucide-react";
 import { getRole } from "../services/authService";
+import "./Sidebar.css";
 
 const ALL_ITEMS = [
   // ── Admin / Placement Officer ──────────────────────────────────────────────
-  { path: "/admin/dashboard",    label: "Dashboard",    icon: "📊", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
-  { path: "/admin/students",     label: "Students",     icon: "👥", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
-  { path: "/admin/companies",    label: "Companies",    icon: "🏢", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
-  { path: "/admin/drives",       label: "Drives",       icon: "📋", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
-  { path: "/admin/calendar",     label: "Calendar",     icon: "🗓️", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
-  { path: "/admin/notify-students", label: "Notify Students", icon: "📣", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
-  { path: "/admin/applications", label: "Applications", icon: "📄", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
-  { path: "/admin/forms",        label: "Forms",        icon: "📝", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
-  { path: "/admin/penalties",    label: "Penalties",    icon: "⚖️", roles: ["ADMIN", "PLACEMENT_OFFICER"] },
-  { path: "/admin/officers",     label: "Officers",      icon: "🛡️", roles: ["ADMIN"] },
+  { path: "/admin/dashboard",    label: "Dashboard",    icon: LayoutDashboard, roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/students",     label: "Students",     icon: Users,           roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/companies",    label: "Companies",    icon: Building2,       roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/hr-contacts",  label: "HR Contacts",  icon: Contact,         roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/drives",       label: "Drives",       icon: Briefcase,       roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/calendar",     label: "Calendar",     icon: CalendarDays,    roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/notify-students", label: "Notify Students", icon: Megaphone, roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/applications", label: "Applications", icon: FileText,        roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/forms",        label: "Forms",        icon: ClipboardList,   roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/penalties",    label: "Penalties",    icon: Scale,           roles: ["ADMIN", "PLACEMENT_OFFICER"] },
+  { path: "/admin/officers",     label: "Officers",     icon: ShieldCheck,     roles: ["ADMIN"] },
 
   // ── Student portal ─────────────────────────────────────────────────────────
-  { path: "/student/dashboard",        label: "Dashboard",       icon: "📊", roles: ["STUDENT"] },
-  { path: "/student/profile",          label: "My Profile",      icon: "👤", roles: ["STUDENT"] },
-  { path: "/student/eligible-drives",  label: "Eligible Drives", icon: "🎯", roles: ["STUDENT"] },
-  { path: "/student/applications",     label: "My Applications", icon: "📋", roles: ["STUDENT"] },
-  { path: "/student/placement-status", label: "Placement Status",icon: "🏆", roles: ["STUDENT"] },
+  { path: "/student/dashboard",        label: "Dashboard",        icon: LayoutDashboard, roles: ["STUDENT"] },
+  { path: "/student/profile",          label: "My Profile",       icon: User,            roles: ["STUDENT"] },
+  { path: "/student/eligible-drives",  label: "Eligible Drives",  icon: Target,          roles: ["STUDENT"] },
+  { path: "/student/applications",     label: "My Applications",  icon: ClipboardList,   roles: ["STUDENT"] },
+  { path: "/student/placement-status", label: "Placement Status", icon: Trophy,          roles: ["STUDENT"] },
 ];
 
 function Sidebar() {
@@ -54,35 +60,17 @@ function Sidebar() {
               item.path === "/admin/dashboard" || item.path === "/student/dashboard"
                 ? location.pathname === item.path
                 : location.pathname.startsWith(item.path);
+            const Icon = item.icon;
 
             return (
               <li key={item.path} className="nav-item">
                 <Link
-                  className="nav-link d-flex align-items-center gap-2"
+                  className={`nav-link d-flex align-items-center gap-2 sidebar-link ${active ? "active" : ""}`}
                   to={item.path}
-                  style={{
-                    fontSize: "0.84rem",
-                    fontWeight: active ? 700 : 500,
-                    color: active ? "#2563eb" : "#475569",
-                    background: active ? "#eff6ff" : "transparent",
-                    borderRadius: 7,
-                    padding: "7px 10px",
-                    transition: "background 0.12s ease, color 0.12s ease",
-                  }}
                 >
-                  <span style={{ fontSize: "1rem" }}>{item.icon}</span>
+                  <Icon size={16} className="sidebar-icon" />
                   {item.label}
-                  {active && (
-                    <span
-                      style={{
-                        marginLeft: "auto",
-                        width: 4,
-                        height: 4,
-                        borderRadius: "50%",
-                        background: "#2563eb",
-                      }}
-                    />
-                  )}
+                  {active && <span className="sidebar-dot" />}
                 </Link>
               </li>
             );

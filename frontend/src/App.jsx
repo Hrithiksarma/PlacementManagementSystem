@@ -16,6 +16,7 @@ import ChangePassword from "./pages/ChangePassword";
 import ManageOfficers from "./pages/ManageOfficers";
 import FormSubmissions from "./pages/FormSubmissions";
 import Penalties       from "./pages/Penalties";
+import HrContacts      from "./pages/HrContacts";
 
 import StudentDashboard from "./pages/student/StudentDashboard";
 import MyProfile        from "./pages/student/MyProfile";
@@ -90,6 +91,9 @@ function App() {
         } />
         <Route path="/admin/penalties" element={
           <AdminRoute><Penalties /></AdminRoute>
+        } />
+        <Route path="/admin/hr-contacts" element={
+          <AdminRoute><HrContacts /></AdminRoute>
         } />
         <Route path="/admin/officers" element={
           <SuperAdminRoute><ManageOfficers /></SuperAdminRoute>

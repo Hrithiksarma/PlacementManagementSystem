@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 import { login } from "../services/authService";
 import iiitgLogo from "../assets/logo_iiit.png";
 import "./Login.css";
@@ -117,7 +118,7 @@ function Login() {
 
           {error && (
             <div className="login-error">
-              <span>⚠</span> {error}
+              <AlertTriangle size={14} /> {error}
             </div>
           )}
 

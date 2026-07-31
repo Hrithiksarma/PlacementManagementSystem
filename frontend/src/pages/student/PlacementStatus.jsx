@@ -3,6 +3,11 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
+import {
+  PartyPopper, Sparkles, Trophy, Check, Star, CheckCircle2, Mail,
+  IndianRupee, Clock, ArrowLeft, ArrowRight, Hourglass, ClipboardList,
+  Target, TrendingUp, Rocket,
+} from "lucide-react";
 import Layout from "../../components/Layout";
 import {
   getPlacementStatus,
@@ -31,6 +36,8 @@ function ProgressTracker({ currentStage }) {
   const currentIdx = PIPELINE.indexOf(currentStage);
   const isRejected = currentStage === "Rejected";
   const allDone    = currentStage === "Selected";
+  const effectiveIdx = allDone ? PIPELINE.length - 1 : isRejected ? 0 : Math.max(currentIdx, 0);
+  const fillPercent  = isRejected ? 0 : (effectiveIdx / (PIPELINE.length - 1)) * 100;
 
   return (
     <div className="ps-tracker-card">
@@ -40,24 +47,29 @@ function ProgressTracker({ currentStage }) {
           <span className="ps-tracker-rejected-badge">Not Progressed</span>
         )}
         {allDone && (
-          <span className="ps-tracker-placed-badge">🎉 Placed!</span>
+          <span className="ps-tracker-placed-badge d-inline-flex align-items-center gap-1">
+            <PartyPopper size={13} />
+            Placed!
+          </span>
         )}
       </div>
 
-      <div className="ps-tracker-steps">
+      <div className="ps-track-wrap">
+        <div className="ps-track">
+          <div className="ps-track-fill" style={{ width: `${fillPercent}%` }} />
+        </div>
         {PIPELINE.map((stage, i) => {
           const done   = allDone || (!isRejected && i < currentIdx);
           const active = !allDone && !isRejected && i === currentIdx;
-          const cls    = done ? "ps-ts-done" : active ? "ps-ts-active" : "ps-ts-future";
+          const pos    = (i / (PIPELINE.length - 1)) * 100;
           return (
-            <div key={stage} className="ps-tracker-col">
-              <div className={`ps-ts ${cls}`}>
-                <div className="ps-ts-dot">{done ? "✓" : i + 1}</div>
-                <div className="ps-ts-label">{stage}</div>
-              </div>
-              {i < PIPELINE.length - 1 && (
-                <div className={`ps-ts-connector ${done ? "ps-ts-conn-done" : ""}`} />
-              )}
+            <div
+              key={stage}
+              className={`ps-track-stage ${done ? "ps-stage-done" : active ? "ps-stage-active" : ""}`}
+              style={{ left: `${pos}%` }}
+            >
+              <div className="ps-track-marker">{done && <Check size={11} />}</div>
+              <div className="ps-track-label">{stage}</div>
             </div>
           );
         })}
@@ -78,7 +90,9 @@ function OfferCard({ offer }) {
     <div className={`ps-offer-card ${offer.currentOffer ? "ps-offer-card--current" : "ps-offer-card--previous"}`}>
       {/* Badge */}
       <div className={`ps-offer-label ${offer.currentOffer ? "ps-offer-label--current" : "ps-offer-label--previous"}`}>
-        {offer.currentOffer ? "⭐ Current Best Offer" : "Previous Offer"}
+        {offer.currentOffer
+          ? <span className="d-inline-flex align-items-center gap-1"><Star size={12} />Current Best Offer</span>
+          : "Previous Offer"}
       </div>
 
       {/* Company + tier */}
@@ -108,7 +122,10 @@ function OfferCard({ offer }) {
         <div className="ps-offer-item">
           <div className="ps-offer-item-label">Status</div>
           <div className="ps-offer-item-value">
-            <span className="ps-offer-selected-chip">✓ Selected</span>
+            <span className="ps-offer-selected-chip d-inline-flex align-items-center gap-1">
+              <CheckCircle2 size={12} />
+              Selected
+            </span>
           </div>
         </div>
       </div>
@@ -165,7 +182,7 @@ function PlacementStatus() {
         {!status?.placed && status?.hasPendingOffer && (
           <div className="ps-pending-offer-card">
             <div className="ps-pending-offer-header">
-              <span className="ps-pending-offer-icon">📩</span>
+              <span className="ps-pending-offer-icon"><Mail size={18} /></span>
               <div>
                 <div className="ps-pending-offer-title">Offer Available — Action Required</div>
                 <div className="ps-pending-offer-sub">
@@ -181,9 +198,17 @@ function PlacementStatus() {
             </div>
             <div className="ps-pending-offer-meta">
               {status.pendingOfferRole && <span>{status.pendingOfferRole}</span>}
-              {status.pendingOfferPackage != null && <span>💰 {status.pendingOfferPackage} LPA</span>}
+              {status.pendingOfferPackage != null && (
+                <span className="d-inline-flex align-items-center gap-1">
+                  <IndianRupee size={12} />
+                  {status.pendingOfferPackage} LPA
+                </span>
+              )}
               {status.pendingOfferDeadline && (
-                <span style={{ color: "#dc2626" }}>⏰ Valid until {formatDate(status.pendingOfferDeadline)}</span>
+                <span style={{ color: "#dc2626" }} className="d-inline-flex align-items-center gap-1">
+                  <Clock size={12} />
+                  Valid until {formatDate(status.pendingOfferDeadline)}
+                </span>
               )}
             </div>
             <p className="ps-pending-offer-hint">
@@ -196,7 +221,13 @@ function PlacementStatus() {
           /* ── PLACED — offer carousel ─────────────────────────────────────── */
           <>
             <div className="ps-placed-banner">
-              <div className="ps-confetti-row">🎉 🎊 🏆 🎊 🎉</div>
+              <div className="ps-confetti-row d-flex justify-content-center gap-2">
+                <PartyPopper size={22} color="#f59e0b" />
+                <Sparkles size={22} color="#7c3aed" />
+                <Trophy size={22} color="#eab308" />
+                <Sparkles size={22} color="#7c3aed" />
+                <PartyPopper size={22} color="#f59e0b" />
+              </div>
               <div className="ps-placed-headline">Congratulations!</div>
               <div className="ps-placed-sub">
                 {offers.length > 1
@@ -226,7 +257,11 @@ function PlacementStatus() {
                 )}
 
                 {offers.length > 1 && (
-                  <p className="ps-swipe-hint">← Swipe to see all offers →</p>
+                  <p className="ps-swipe-hint d-flex align-items-center justify-content-center gap-1">
+                    <ArrowLeft size={12} />
+                    Swipe to see all offers
+                    <ArrowRight size={12} />
+                  </p>
                 )}
               </div>
             )}
@@ -234,47 +269,41 @@ function PlacementStatus() {
         ) : hasActiveApplication ? (
           /* ── IN PROGRESS ─────────────────────────────────────────────────── */
           <div className="ps-pending-card">
-            <div className="ps-pending-icon">⏳</div>
-            <div className="ps-pending-headline">Placement In Progress</div>
+            <div className="ps-pending-header">
+              <span className="ps-pending-icon"><Hourglass size={20} strokeWidth={1.8} /></span>
+              <div className="ps-pending-headline">Placement In Progress</div>
+            </div>
             <div className="ps-pending-sub">
               {status?.message ?? "Your placement journey is in progress. Keep applying!"}
             </div>
 
-            <div className="ps-tips-grid">
-              <div className="ps-tip">
-                <span className="ps-tip-icon">📋</span>
-                <div className="ps-tip-body">
-                  <div className="ps-tip-title">Track Your Applications</div>
-                  <div className="ps-tip-text">
-                    Monitor status updates on your My Applications page.
-                  </div>
+            <div className="ps-tips-list">
+              <div className="ps-tip-row">
+                <span className="ps-tip-row-icon"><ClipboardList size={16} /></span>
+                <div className="ps-tip-row-body">
+                  <span className="ps-tip-row-title">Track Your Applications</span>
+                  <span className="ps-tip-row-text">Monitor status updates on your My Applications page.</span>
                 </div>
               </div>
-              <div className="ps-tip">
-                <span className="ps-tip-icon">🎯</span>
-                <div className="ps-tip-body">
-                  <div className="ps-tip-title">Apply to More Drives</div>
-                  <div className="ps-tip-text">
-                    Increase your chances by applying to more eligible drives.
-                  </div>
+              <div className="ps-tip-row">
+                <span className="ps-tip-row-icon"><Target size={16} /></span>
+                <div className="ps-tip-row-body">
+                  <span className="ps-tip-row-title">Apply to More Drives</span>
+                  <span className="ps-tip-row-text">Increase your chances by applying to more eligible drives.</span>
                 </div>
               </div>
-              <div className="ps-tip">
-                <span className="ps-tip-icon">📈</span>
-                <div className="ps-tip-body">
-                  <div className="ps-tip-title">Prepare for Interviews</div>
-                  <div className="ps-tip-text">
-                    Review technical topics relevant to your applied roles.
-                  </div>
+              <div className="ps-tip-row">
+                <span className="ps-tip-row-icon"><TrendingUp size={16} /></span>
+                <div className="ps-tip-row-body">
+                  <span className="ps-tip-row-title">Prepare for Interviews</span>
+                  <span className="ps-tip-row-text">Review technical topics relevant to your applied roles.</span>
                 </div>
               </div>
-              <div className="ps-tip">
-                <span className="ps-tip-icon">✅</span>
-                <div className="ps-tip-body">
-                  <div className="ps-tip-title">Stay Reachable</div>
-                  <div className="ps-tip-text">
-                    Keep your contact details updated so the placement cell can reach you.
-                  </div>
+              <div className="ps-tip-row">
+                <span className="ps-tip-row-icon"><CheckCircle2 size={16} /></span>
+                <div className="ps-tip-row-body">
+                  <span className="ps-tip-row-title">Stay Reachable</span>
+                  <span className="ps-tip-row-text">Keep your contact details updated so the placement cell can reach you.</span>
                 </div>
               </div>
             </div>
@@ -282,47 +311,41 @@ function PlacementStatus() {
         ) : (
           /* ── NO APPLICATIONS YET ─────────────────────────────────────────── */
           <div className="ps-pending-card">
-            <div className="ps-pending-icon">🚀</div>
-            <div className="ps-pending-headline">Start Your Journey</div>
+            <div className="ps-pending-header">
+              <span className="ps-pending-icon"><Rocket size={20} strokeWidth={1.8} /></span>
+              <div className="ps-pending-headline">Start Your Journey</div>
+            </div>
             <div className="ps-pending-sub">
               You haven&apos;t applied to any drives yet. Browse eligible drives and submit your first application!
             </div>
 
-            <div className="ps-tips-grid">
-              <div className="ps-tip">
-                <span className="ps-tip-icon">🎯</span>
-                <div className="ps-tip-body">
-                  <div className="ps-tip-title">Browse Eligible Drives</div>
-                  <div className="ps-tip-text">
-                    Check drives you qualify for based on your CGPA and backlog criteria.
-                  </div>
+            <div className="ps-tips-list">
+              <div className="ps-tip-row">
+                <span className="ps-tip-row-icon"><Target size={16} /></span>
+                <div className="ps-tip-row-body">
+                  <span className="ps-tip-row-title">Browse Eligible Drives</span>
+                  <span className="ps-tip-row-text">Check drives you qualify for based on your CGPA and backlog criteria.</span>
                 </div>
               </div>
-              <div className="ps-tip">
-                <span className="ps-tip-icon">📈</span>
-                <div className="ps-tip-body">
-                  <div className="ps-tip-title">Improve Your Profile</div>
-                  <div className="ps-tip-text">
-                    Higher CGPA unlocks Tier B and Tier C company drives.
-                  </div>
+              <div className="ps-tip-row">
+                <span className="ps-tip-row-icon"><TrendingUp size={16} /></span>
+                <div className="ps-tip-row-body">
+                  <span className="ps-tip-row-title">Improve Your Profile</span>
+                  <span className="ps-tip-row-text">Higher CGPA unlocks Tier B and Tier C company drives.</span>
                 </div>
               </div>
-              <div className="ps-tip">
-                <span className="ps-tip-icon">✅</span>
-                <div className="ps-tip-body">
-                  <div className="ps-tip-title">Clear Backlogs</div>
-                  <div className="ps-tip-text">
-                    Zero active backlogs maximises your eligible drive count.
-                  </div>
+              <div className="ps-tip-row">
+                <span className="ps-tip-row-icon"><CheckCircle2 size={16} /></span>
+                <div className="ps-tip-row-body">
+                  <span className="ps-tip-row-title">Clear Backlogs</span>
+                  <span className="ps-tip-row-text">Zero active backlogs maximises your eligible drive count.</span>
                 </div>
               </div>
-              <div className="ps-tip">
-                <span className="ps-tip-icon">📋</span>
-                <div className="ps-tip-body">
-                  <div className="ps-tip-title">Prepare Early</div>
-                  <div className="ps-tip-text">
-                    Review aptitude, DSA, and company-specific prep materials.
-                  </div>
+              <div className="ps-tip-row">
+                <span className="ps-tip-row-icon"><ClipboardList size={16} /></span>
+                <div className="ps-tip-row-body">
+                  <span className="ps-tip-row-title">Prepare Early</span>
+                  <span className="ps-tip-row-text">Review aptitude, DSA, and company-specific prep materials.</span>
                 </div>
               </div>
             </div>

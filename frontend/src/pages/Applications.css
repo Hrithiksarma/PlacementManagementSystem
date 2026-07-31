@@ -125,6 +125,103 @@
   color: #b91c1c;
 }
 
+/* ── Applications table ──────────────────────────────────────────────────── */
+
+.applications-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.applications-table thead th {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.applications-table tbody td {
+  padding: 10px 14px;
+  vertical-align: middle;
+  font-size: 0.84rem;
+  border-bottom: 1px solid #eef1f5;
+  border-top: none;
+}
+
+.applications-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.app-status-select {
+  min-width: 172px;
+  font-weight: 600;
+  font-size: 0.78rem;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.app-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-action-btn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.1s ease;
+}
+
+.app-action-btn:active {
+  transform: scale(0.93);
+}
+
+.app-action-btn.mail {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.app-action-btn.mail:hover {
+  background: #dbeafe;
+}
+
+.app-action-btn.mail.sent {
+  color: #16a34a;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  cursor: default;
+}
+
+.app-action-btn.mail.sent:active {
+  transform: none;
+}
+
+.app-action-btn.delete {
+  color: #dc2626;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.app-action-btn.delete:hover {
+  background: #fee2e2;
+}
+
+.app-email-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 14px 16px;
+}
+
 /* Placement Tier Badges */
 .tier-badge {
   display: inline-block;

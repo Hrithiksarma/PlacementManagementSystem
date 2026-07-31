@@ -13,4 +13,8 @@ public interface DriveFormSubmissionRepository extends JpaRepository<DriveFormSu
     boolean existsByResponseKey(String responseKey);
 
     Optional<DriveFormSubmission> findByResponseKey(String responseKey);
+
+    List<DriveFormSubmission> findByCompanyNameIgnoreCase(String companyName);
+
+    List<DriveFormSubmission> findByCompanyNameContainingIgnoreCase(String companyName);
 }

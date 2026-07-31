@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { CheckCircle2, AlertTriangle, Search, Mail, Minus, XCircle, Send, X, Trash2 } from "lucide-react";
 import Layout from "../components/Layout";
 import {
   getFilteredApplications,
   updateApplicationStatus,
-  resendSelectionEmail,
+  sendStatusEmail,
   deleteApplication,
 } from "../services/applicationService";
 import { getStudents } from "../services/studentService";
@@ -39,6 +40,9 @@ const STATUS_TRANSITIONS = {
   "First Round":         ["Interview Scheduled", "Selected", "Rejected"],
   "Interview Scheduled": ["Selected", "Rejected"],
 };
+
+// Statuses for which the admin can send a stage-specific notification email.
+const EMAILABLE_STATUSES = ["First Round", "Interview Scheduled", "Selected", "Rejected"];
 
 const STATUS_SELECT_STYLE = {
   Applied:               { background: "#eff6ff", color: "#1d4ed8" },
@@ -94,6 +98,9 @@ function Applications() {
   const [successMessage,  setSuccessMessage]  = useState(null);
   const [errorMessage,    setErrorMessage]    = useState(null);
   const [savingId,        setSavingId]        = useState(null);
+  const [expandedEmailRowId, setExpandedEmailRowId] = useState(null);
+  const [emailComment,       setEmailComment]       = useState("");
+  const [sendingEmail,       setSendingEmail]       = useState(false);
 
   const [cohort, setCohort] = useState({
     branch: "CSE", program: "B.Tech", batchYear: 2025,
@@ -171,13 +178,8 @@ function Applications() {
         prev.map((a) => {
           if (a.applicationId !== id) return a;
           const updated = { ...a, status: newStatus };
-          if (newStatus === "Selected") {
-            // Backend auto-sends the congratulations email on selection, and
-            // also sets the student's placement tier.
-            updated.selectionEmailSent = true;
-            if (a.drive?.company?.tier) {
-              updated.student = { ...a.student, placementTier: a.drive.company.tier };
-            }
+          if (newStatus === "Selected" && a.drive?.company?.tier) {
+            updated.student = { ...a.student, placementTier: a.drive.company.tier };
           }
           return updated;
         })
@@ -193,21 +195,31 @@ function Applications() {
     }
   };
 
-  const handleSendEmail = async (app) => {
-    setSavingId(app.applicationId);
+  const openEmailBox = (applicationId) => {
+    setExpandedEmailRowId(applicationId);
+    setEmailComment("");
+  };
+
+  const closeEmailBox = () => {
+    setExpandedEmailRowId(null);
+    setEmailComment("");
+  };
+
+  const handleConfirmSendEmail = async (app) => {
+    setSendingEmail(true);
     try {
-      await resendSelectionEmail(app.applicationId);
-      // Flip this row to "Sent ✓" immediately; future loads read the real flag.
+      await sendStatusEmail(app.applicationId, emailComment.trim());
       setAllApplications((prev) =>
         prev.map((a) =>
-          a.applicationId === app.applicationId ? { ...a, selectionEmailSent: true } : a
+          a.applicationId === app.applicationId ? { ...a, lastEmailStatus: app.status } : a
         )
       );
-      setSuccessMessage("Selection email sent.");
+      setSuccessMessage("Email sent.");
+      closeEmailBox();
     } catch (err) {
       setErrorMessage(err.response?.data?.message ?? "Failed to send the email.");
     } finally {
-      setSavingId(null);
+      setSendingEmail(false);
     }
   };
 
@@ -241,7 +253,7 @@ function Applications() {
       {/* Success toast */}
       {successMessage && (
         <div className="alert alert-success d-flex align-items-center py-2 mb-3" role="alert">
-          <span className="me-2">✅</span>
+          <CheckCircle2 size={16} className="me-2 flex-shrink-0" />
           <span className="flex-grow-1">{successMessage}</span>
           <button type="button" className="btn-close btn-close-sm" onClick={() => setSuccessMessage(null)} />
         </div>
@@ -250,7 +262,7 @@ function Applications() {
       {/* Error toast */}
       {errorMessage && (
         <div className="alert alert-danger d-flex align-items-center py-2 mb-3" role="alert">
-          <span className="me-2">⚠️</span>
+          <AlertTriangle size={16} className="me-2 flex-shrink-0" />
           <span className="flex-grow-1">{errorMessage}</span>
           <button type="button" className="btn-close btn-close-sm" onClick={() => setErrorMessage(null)} />
         </div>
@@ -388,7 +400,7 @@ function Applications() {
       {hasSearched && (
         displayedApplications.length === 0 ? (
           <div className="text-center py-5 text-muted">
-            <div style={{ fontSize: "2.5rem" }}>🔍</div>
+            <Search size={40} strokeWidth={1.6} style={{ marginBottom: 4 }} />
             <p className="fw-semibold mt-2 mb-1 text-dark">No applications found</p>
             <ul className="list-unstyled small">
               <li>Try changing the Branch, Program, or Batch Year</li>
@@ -397,7 +409,7 @@ function Applications() {
             </ul>
           </div>
         ) : (
-          <table className="table table-striped table-bordered table-hover table-sm">
+          <table className="table table-striped table-hover applications-table">
             <thead className="table-dark">
               <tr>
                 <th>ID</th>
@@ -413,7 +425,8 @@ function Applications() {
             </thead>
             <tbody>
               {displayedApplications.map((app) => (
-                <tr key={app.applicationId}>
+                <Fragment key={app.applicationId}>
+                <tr>
                   <td>{app.applicationId}</td>
                   <td>{app.student?.name ?? "—"}</td>
                   <td>{app.student?.cgpa ?? "—"}</td>
@@ -425,19 +438,13 @@ function Applications() {
                     {STATUS_TRANSITIONS[app.status] ? (
                       <>
                         <select
-                          className="form-select form-select-sm"
+                          className="form-select form-select-sm app-status-select"
                           value={app.status}
                           disabled={savingId === app.applicationId}
                           onChange={(e) =>
                             handleQuickStatusUpdate(app.applicationId, e.target.value)
                           }
-                          style={{
-                            minWidth: 185,
-                            fontWeight: 600,
-                            fontSize: "0.78rem",
-                            cursor: "pointer",
-                            ...STATUS_SELECT_STYLE[app.status],
-                          }}
+                          style={STATUS_SELECT_STYLE[app.status]}
                         >
                           <option value={app.status}>{app.status}</option>
                           {STATUS_TRANSITIONS[app.status].map((s) => (
@@ -453,7 +460,9 @@ function Applications() {
                     ) : (
                       <span
                         style={{
-                          display: "inline-block",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
                           padding: "5px 14px",
                           borderRadius: 6,
                           fontWeight: 700,
@@ -461,32 +470,84 @@ function Applications() {
                           ...FINAL_STATUS_STYLE[app.status],
                         }}
                       >
-                        {app.status === "Offer Accepted" ? "✓" : app.status === "Selected" ? "📩" : app.status === "Withdrawn" ? "–" : "✗"} {app.status}
+                        {app.status === "Offer Accepted" ? <CheckCircle2 size={12} />
+                          : app.status === "Selected" ? <Mail size={12} />
+                          : app.status === "Withdrawn" ? <Minus size={12} />
+                          : <XCircle size={12} />}
+                        {app.status}
                       </span>
                     )}
                   </td>
                   <td>
-                    {app.status === "Selected" && (
+                    <div className="app-action-row">
+                      {EMAILABLE_STATUSES.includes(app.status) && (
+                        <button
+                          className={`app-action-btn mail ${app.lastEmailStatus === app.status ? "sent" : ""}`}
+                          disabled={app.lastEmailStatus === app.status}
+                          title={
+                            app.lastEmailStatus === app.status
+                              ? "Email already sent for this status"
+                              : "Send Email"
+                          }
+                          onClick={() =>
+                            expandedEmailRowId === app.applicationId
+                              ? closeEmailBox()
+                              : openEmailBox(app.applicationId)
+                          }
+                        >
+                          {app.lastEmailStatus === app.status
+                            ? <CheckCircle2 size={15} />
+                            : <Mail size={15} />}
+                        </button>
+                      )}
                       <button
-                        className={`btn btn-sm me-2 ${app.selectionEmailSent ? "btn-secondary" : "btn-primary"}`}
-                        disabled={app.selectionEmailSent || savingId === app.applicationId}
-                        onClick={() => handleSendEmail(app)}
+                        className="app-action-btn delete"
+                        title="Delete application"
+                        onClick={() => handleDelete(app.applicationId)}
                       >
-                        {app.selectionEmailSent
-                          ? "Sent ✓"
-                          : savingId === app.applicationId
-                            ? "Sending…"
-                            : "✉️ Send Email"}
+                        <Trash2 size={15} />
                       </button>
-                    )}
-                    <button
-                      className="btn btn-sm action-delete"
-                      onClick={() => handleDelete(app.applicationId)}
-                    >
-                      Delete
-                    </button>
+                    </div>
                   </td>
                 </tr>
+                {expandedEmailRowId === app.applicationId && (
+                  <tr>
+                    <td colSpan={9} style={{ background: "#f8fafc" }}>
+                      <div className="app-email-box d-flex flex-column gap-2" style={{ maxWidth: 560 }}>
+                        <label className="fw-semibold" style={{ fontSize: "0.8rem" }}>
+                          Admin Comments
+                        </label>
+                        <textarea
+                          className="form-control form-control-sm"
+                          rows={3}
+                          placeholder="Add a note to include in this status update email…"
+                          value={emailComment}
+                          onChange={(e) => setEmailComment(e.target.value)}
+                          disabled={sendingEmail}
+                        />
+                        <div className="d-flex gap-2">
+                          <button
+                            className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                            disabled={sendingEmail}
+                            onClick={() => handleConfirmSendEmail(app)}
+                          >
+                            <Send size={12} />
+                            {sendingEmail ? "Sending…" : "Send"}
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+                            disabled={sendingEmail}
+                            onClick={closeEmailBox}
+                          >
+                            <X size={12} />
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>

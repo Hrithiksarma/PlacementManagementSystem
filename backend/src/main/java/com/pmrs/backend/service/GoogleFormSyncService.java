@@ -123,7 +123,18 @@ public class GoogleFormSyncService {
             }
 
             String responseKey = timestamp + "|" + companyName + "|" + roleOffered;
-            if (submissionRepository.existsByResponseKey(responseKey)) {
+            DriveFormSubmission existing = submissionRepository.findByResponseKey(responseKey).orElse(null);
+            if (existing != null) {
+                // Backfill fields added after this row was first synced (e.g. designation)
+                // so older, still-untouched submissions pick them up on the next poll.
+                if (DriveFormSubmission.STATUS_PENDING.equals(existing.getStatus())
+                        && (existing.getDesignation() == null || existing.getDesignation().isBlank())) {
+                    String designation = cell(row, cols.designation);
+                    if (!designation.isBlank()) {
+                        existing.setDesignation(designation);
+                        submissionRepository.save(existing);
+                    }
+                }
                 continue;
             }
 
@@ -138,6 +149,7 @@ public class GoogleFormSyncService {
             s.setHrName(cell(row, cols.hrName));
             s.setHrEmail(cell(row, cols.hrEmail));
             s.setHrPhone(cell(row, cols.hrPhone));
+            s.setDesignation(cell(row, cols.designation));
             s.setDriveDate(parseDate(cell(row, cols.driveDate)));
             s.setPptDate(parseDate(cell(row, cols.pptDate)));
             s.setResumeSelectionDate(parseDate(cell(row, cols.resumeSelectionDate)));
@@ -204,7 +216,7 @@ public class GoogleFormSyncService {
      */
     private static final class ColumnMap {
         int timestamp = -1, companyName = -1, sector = -1, tier = -1, website = -1,
-            hrName = -1, hrEmail = -1, hrPhone = -1, driveDate = -1, roleOffered = -1,
+            hrName = -1, hrEmail = -1, hrPhone = -1, designation = -1, driveDate = -1, roleOffered = -1,
             packageLpa = -1, driveType = -1, minCgpa = -1, maxBacklogs = -1, jdUrl = -1,
             pptDate = -1, resumeSelectionDate = -1, finalSelectionDate = -1;
 
@@ -255,6 +267,8 @@ public class GoogleFormSyncService {
                     m.hrEmail = i;
                 } else if (m.hrPhone < 0 && h.startsWith("contact number 1")) {
                     m.hrPhone = i;
+                } else if (m.designation < 0 && h.equals("contact person designation")) {
+                    m.designation = i;
                 } else if (m.driveDate < 0 && h.startsWith("tentative date of online/offline exam")) {
                     m.driveDate = i;
                 } else if (m.pptDate < 0 && h.startsWith("tentative date of pre placement talk")) {
@@ -297,6 +311,8 @@ public class GoogleFormSyncService {
                 } else if (m.hrPhone < 0 && (h.contains("phone") || h.contains("mobile")
                         || h.contains("contact number") || h.contains("contact no"))) {
                     m.hrPhone = i;
+                } else if (m.designation < 0 && h.contains("designation") && h.contains("contact")) {
+                    m.designation = i;
                 } else if (m.jdUrl < 0 && (h.contains("jd") || h.contains("attachment")
                         || h.contains("job desc"))) {
                     m.jdUrl = i;

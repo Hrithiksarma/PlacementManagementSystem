@@ -55,6 +55,9 @@ public class DriveFormSubmission {
     @Column(name = "hr_phone")
     private String hrPhone;
 
+    @Column(name = "designation")
+    private String designation;
+
     @Column(name = "drive_date")
     private LocalDate driveDate;
 
@@ -170,6 +173,14 @@ public class DriveFormSubmission {
 
     public void setHrPhone(String hrPhone) {
         this.hrPhone = hrPhone;
+    }
+
+    public String getDesignation() {
+        return designation;
+    }
+
+    public void setDesignation(String designation) {
+        this.designation = designation;
     }
 
     public LocalDate getDriveDate() {

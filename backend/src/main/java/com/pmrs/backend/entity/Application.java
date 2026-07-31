@@ -61,8 +61,8 @@ public class Application {
     @Column(name = "offer_deadline")
     private LocalDate offerDeadline;
 
-    @Column(name = "selection_email_sent")
-    private Boolean selectionEmailSent = false;
+    @Column(name = "last_email_status")
+    private String lastEmailStatus;
 
     public Integer getApplicationId() {
         return applicationId;
@@ -130,6 +130,6 @@ public class Application {
     public LocalDate     getOfferDeadline()                         { return offerDeadline; }
     public void          setOfferDeadline(LocalDate v)              { this.offerDeadline = v; }
 
-    public Boolean       getSelectionEmailSent()                    { return selectionEmailSent; }
-    public void          setSelectionEmailSent(Boolean v)           { this.selectionEmailSent = v; }
+    public String        getLastEmailStatus()                       { return lastEmailStatus; }
+    public void          setLastEmailStatus(String v)                { this.lastEmailStatus = v; }
 }

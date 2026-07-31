@@ -14,6 +14,9 @@ public class StudentProfileDTO {
     private Integer activeBacklogs;
     private String  placementTier;    // Actual placement outcome: Unplaced / A / B / C
     private String  placementStatus;  // "Placed" | "Not Placed"
+    private String  photoUrl;
+    private String  resumeUrl;
+    private String  gradeSheetUrl;
 
     public StudentProfileDTO() {}
 
@@ -70,4 +73,13 @@ public class StudentProfileDTO {
 
     public String  getPlacementStatus()           { return placementStatus; }
     public void    setPlacementStatus(String v)   { this.placementStatus = v; }
+
+    public String  getPhotoUrl()                  { return photoUrl; }
+    public void    setPhotoUrl(String v)          { this.photoUrl = v; }
+
+    public String  getResumeUrl()                 { return resumeUrl; }
+    public void    setResumeUrl(String v)         { this.resumeUrl = v; }
+
+    public String  getGradeSheetUrl()             { return gradeSheetUrl; }
+    public void    setGradeSheetUrl(String v)     { this.gradeSheetUrl = v; }
 }

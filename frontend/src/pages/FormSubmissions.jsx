@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, Fragment } from "react";
 import { Link } from "react-router-dom";
+import { Building2, GraduationCap, Bell, ClipboardList, CheckCircle2, ExternalLink } from "lucide-react";
 import Layout from "../components/Layout";
 import StudentFormSubmissions from "./StudentFormSubmissions";
 import {
@@ -177,18 +178,20 @@ function FormSubmissions() {
         <ul className="nav nav-tabs mb-0">
           <li className="nav-item">
             <button
-              className={`nav-link ${view === "company" ? "active" : ""}`}
+              className={`nav-link d-flex align-items-center gap-2 ${view === "company" ? "active" : ""}`}
               onClick={() => setView("company")}
             >
-              🏢 Company Drives
+              <Building2 size={15} />
+              Company Drives
             </button>
           </li>
           <li className="nav-item">
             <button
-              className={`nav-link ${view === "student" ? "active" : ""}`}
+              className={`nav-link d-flex align-items-center gap-2 ${view === "student" ? "active" : ""}`}
               onClick={() => setView("student")}
             >
-              🎓 Student Registrations
+              <GraduationCap size={15} />
+              Student Registrations
             </button>
           </li>
         </ul>
@@ -199,7 +202,7 @@ function FormSubmissions() {
             onClick={toggleNotifications}
             title="Notifications"
           >
-            🔔
+            <Bell size={15} />
             {unreadCount > 0 && (
               <span
                 className="badge bg-danger rounded-pill position-absolute"
@@ -250,8 +253,9 @@ function FormSubmissions() {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="mb-0">Forms</h2>
         <div className="d-flex gap-2 align-items-center">
-          <span className="text-muted" style={{ fontSize: "0.82rem" }}>
-            📝 Companies submit drives through the Google Form
+          <span className="text-muted d-inline-flex align-items-center gap-1" style={{ fontSize: "0.82rem" }}>
+            <ClipboardList size={13} />
+            Companies submit drives through the Google Form
           </span>
           <button
             className="btn btn-primary btn-sm"
@@ -401,8 +405,9 @@ function FormSubmissions() {
                           </button>
                         </>
                       ) : s.status === "INCLUDED" ? (
-                        <Link to="/admin/drives" className="badge bg-success text-decoration-none">
-                          ✓ Drive #{s.driveId}
+                        <Link to="/admin/drives" className="badge bg-success text-decoration-none d-inline-flex align-items-center gap-1">
+                          <CheckCircle2 size={12} />
+                          Drive #{s.driveId}
                         </Link>
                       ) : (
                         <span className="badge bg-secondary">Rejected</span>
@@ -414,8 +419,9 @@ function FormSubmissions() {
                       <td colSpan="13" className="bg-light">
                         <div className="d-flex align-items-center gap-2 mb-2">
                           <span className="fw-semibold">Job Description</span>
-                          <a href={s.jdUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary py-0">
-                            Open in new tab ↗
+                          <a href={s.jdUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary py-0 d-inline-flex align-items-center gap-1">
+                            Open in new tab
+                            <ExternalLink size={11} />
                           </a>
                         </div>
                         {jdFileId ? (

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { GraduationCap, AlertTriangle, Flag, CheckCircle2 } from "lucide-react";
 import {
   getStudentSubmissions,
   syncStudentSubmissions,
@@ -194,8 +195,9 @@ function StudentFormSubmissions({ highlightSubmissionId, onHighlightHandled }) {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="mb-0">Student Registrations</h2>
         <div className="d-flex gap-2 align-items-center">
-          <span className="text-muted" style={{ fontSize: "0.82rem" }}>
-            🎓 Students register through the Google Form
+          <span className="text-muted d-inline-flex align-items-center gap-1" style={{ fontSize: "0.82rem" }}>
+            <GraduationCap size={13} />
+            Students register through the Google Form
           </span>
           <button
             className="btn btn-primary btn-sm"
@@ -304,13 +306,15 @@ function StudentFormSubmissions({ highlightSubmissionId, onHighlightHandled }) {
                   <td className="fw-semibold">
                     {s.fullName || "—"}
                     {s.failureReason && (
-                      <div className="text-danger" style={{ fontSize: "0.78rem" }}>
-                        ⚠ {s.failureReason}
+                      <div className="text-danger d-flex align-items-center gap-1" style={{ fontSize: "0.78rem" }}>
+                        <AlertTriangle size={11} />
+                        {s.failureReason}
                       </div>
                     )}
                     {s.flagged && (
-                      <div className="text-warning-emphasis" style={{ fontSize: "0.78rem" }}>
-                        🚩 Flagged: {s.flagComment}
+                      <div className="text-warning-emphasis d-flex align-items-center gap-1" style={{ fontSize: "0.78rem" }}>
+                        <Flag size={11} />
+                        Flagged: {s.flagComment}
                       </div>
                     )}
                   </td>
@@ -347,11 +351,12 @@ function StudentFormSubmissions({ highlightSubmissionId, onHighlightHandled }) {
                           Import
                         </button>
                         <button
-                          className="btn btn-sm btn-outline-warning me-2"
+                          className="btn btn-sm btn-outline-warning me-2 d-inline-flex align-items-center gap-1"
                           onClick={() => handleFlag(s)}
                           disabled={s.flagged}
                         >
-                          {s.flagged ? "🚩 Flagged" : "Flag"}
+                          <Flag size={12} />
+                          {s.flagged ? "Flagged" : "Flag"}
                         </button>
                         <button
                           className="btn btn-sm btn-outline-danger"
@@ -361,8 +366,9 @@ function StudentFormSubmissions({ highlightSubmissionId, onHighlightHandled }) {
                         </button>
                       </>
                     ) : s.status === "INCLUDED" ? (
-                      <Link to="/admin/students" className="badge bg-success text-decoration-none">
-                        ✓ Student #{s.studentId}
+                      <Link to="/admin/students" className="badge bg-success text-decoration-none d-inline-flex align-items-center gap-1">
+                        <CheckCircle2 size={12} />
+                        Student #{s.studentId}
                       </Link>
                     ) : (
                       <span className="badge bg-secondary">Rejected</span>

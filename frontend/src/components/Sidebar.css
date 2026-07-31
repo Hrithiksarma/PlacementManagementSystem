@@ -1,0 +1,47 @@
+/* Scoped to .bg-light (the sidebar's own container class) so this reliably
+   beats Bootstrap's .nav-link color rule regardless of CSS load order —
+   two equal-specificity class selectors otherwise fall back to source
+   order, which was letting Bootstrap's link color win on every row. */
+.bg-light .sidebar-link {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #55607a;
+  background: transparent;
+  border-radius: 7px;
+  padding: 7px 10px;
+  transition: background 0.14s ease, color 0.14s ease, padding-left 0.14s ease;
+}
+
+.bg-light .sidebar-link:hover {
+  background: #f1f2f7;
+  color: var(--prms-accent-deep, #1f2f99);
+}
+
+.bg-light .sidebar-link:hover:not(.active) {
+  padding-left: 13px;
+}
+
+.bg-light .sidebar-link.active {
+  background: var(--prms-accent-soft, #eaeeff);
+  color: var(--prms-accent-deep, #1f2f99);
+  font-weight: 700;
+}
+
+.bg-light .sidebar-link .sidebar-icon {
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: opacity 0.14s ease;
+}
+
+.bg-light .sidebar-link:hover .sidebar-icon,
+.bg-light .sidebar-link.active .sidebar-icon {
+  opacity: 1;
+}
+
+.bg-light .sidebar-link .sidebar-dot {
+  margin-left: auto;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--prms-accent-deep, #1f2f99);
+}
