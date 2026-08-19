@@ -104,6 +104,9 @@ function Login() {
               value={form.username}
               onChange={field("username")}
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
             />
           </div>
 
@@ -116,6 +119,9 @@ function Login() {
               value={form.password}
               onChange={field("password")}
               autoComplete="current-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
             />
           </div>
 
