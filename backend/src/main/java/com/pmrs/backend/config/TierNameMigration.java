@@ -29,6 +29,14 @@ import java.util.List;
  * Runs on every startup but is a no-op once migrated (the ALTER only fires
  * while the column is still an ENUM; the renames only match legacy values),
  * so it is safe to leave in place indefinitely.
+ *
+ * Table names are resolved case-insensitively via information_schema before
+ * use (see resolveTableName) rather than hardcoded — MySQL's table-name case
+ * sensitivity depends on the host OS (case-insensitive on Windows, which is
+ * where this was first written and tested; case-sensitive by default on
+ * Linux, e.g. Railway's deployed MySQL), so a literal "Companies" here can
+ * silently stop matching Hibernate's actual physical table name depending on
+ * where it runs.
  */
 @Component
 @Order(1) // before DataInitializer, so seed data always sees the new codes
@@ -42,15 +50,34 @@ public class TierNameMigration implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        widenIfEnum("Companies", "tier", "VARCHAR(20) NOT NULL");
-        widenIfEnum("Students", "placement_tier", "VARCHAR(20) NOT NULL DEFAULT 'Unplaced'");
+        migrateTable("Companies", "tier", "VARCHAR(20) NOT NULL");
+        migrateTable("Students", "placement_tier", "VARCHAR(20) NOT NULL DEFAULT 'Unplaced'");
+    }
 
-        int companies = renameTier("Companies", "tier");
-        int students  = renameTier("Students", "placement_tier");
-        if (companies > 0 || students > 0) {
-            log.info("Tier naming migration: renamed {} compan{}, {} student(s) to the A/B/C scheme.",
-                    companies, companies == 1 ? "y" : "ies", students);
+    private void migrateTable(String logicalTable, String column, String newDefinition) {
+        String table = resolveTableName(logicalTable);
+        if (table == null) {
+            // Table doesn't exist yet (e.g. very first deploy against a fresh
+            // database) — nothing to widen or rename.
+            return;
         }
+        widenIfEnum(table, column, newDefinition);
+        int updated = renameTier(table, column);
+        if (updated > 0) {
+            log.info("Tier naming migration: renamed {} row(s) in {}.{} to the A/B/C scheme.",
+                    updated, table, column);
+        }
+    }
+
+    /** Finds the actual physical table name (correct case) via information_schema, or null if it doesn't exist. */
+    @SuppressWarnings("unchecked")
+    private String resolveTableName(String logicalTable) {
+        List<Object> rows = entityManager.createNativeQuery(
+                "SELECT TABLE_NAME FROM information_schema.TABLES "
+                + "WHERE TABLE_SCHEMA = DATABASE() AND LOWER(TABLE_NAME) = LOWER(:table)")
+                .setParameter("table", logicalTable)
+                .getResultList();
+        return rows.isEmpty() ? null : String.valueOf(rows.get(0));
     }
 
     /**
