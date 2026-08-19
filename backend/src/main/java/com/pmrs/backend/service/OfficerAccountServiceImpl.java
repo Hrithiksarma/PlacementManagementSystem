@@ -10,27 +10,24 @@ import com.pmrs.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.util.List;
 
 @Service
 public class OfficerAccountServiceImpl implements OfficerAccountService {
 
-    private static final String PASSWORD_CHARS =
-        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
-    private static final int PASSWORD_LENGTH = 12;
-    private static final SecureRandom RANDOM = new SecureRandom();
-
     private final UserRepository             userRepository;
     private final PasswordEncoder            passwordEncoder;
     private final OfficerWelcomeEmailService officerWelcomeEmailService;
+    private final TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     public OfficerAccountServiceImpl(UserRepository             userRepository,
                                      PasswordEncoder            passwordEncoder,
-                                     OfficerWelcomeEmailService officerWelcomeEmailService) {
+                                     OfficerWelcomeEmailService officerWelcomeEmailService,
+                                     TemporaryPasswordGenerator temporaryPasswordGenerator) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.officerWelcomeEmailService = officerWelcomeEmailService;
+        this.temporaryPasswordGenerator = temporaryPasswordGenerator;
     }
 
     @Override
@@ -40,7 +37,7 @@ public class OfficerAccountServiceImpl implements OfficerAccountService {
             throw new IllegalArgumentException("Username already taken: " + username);
         }
 
-        String temporaryPassword = generateTemporaryPassword();
+        String temporaryPassword = temporaryPasswordGenerator.generate();
 
         User user = new User();
         user.setUsername(username);
@@ -90,13 +87,5 @@ public class OfficerAccountServiceImpl implements OfficerAccountService {
 
         officerWelcomeEmailService.sendWelcomeEmail(
                 user.getEmail(), user.getUsername(), temporaryPassword, comment);
-    }
-
-    private String generateTemporaryPassword() {
-        StringBuilder sb = new StringBuilder(PASSWORD_LENGTH);
-        for (int i = 0; i < PASSWORD_LENGTH; i++) {
-            sb.append(PASSWORD_CHARS.charAt(RANDOM.nextInt(PASSWORD_CHARS.length())));
-        }
-        return sb.toString();
     }
 }
