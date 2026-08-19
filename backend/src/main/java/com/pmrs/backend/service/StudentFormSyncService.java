@@ -9,13 +9,13 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.pmrs.backend.entity.StudentFormSubmission;
 import com.pmrs.backend.repository.StudentFormSubmissionRepository;
+import com.pmrs.backend.util.GoogleCredentialsResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.List;
@@ -41,10 +41,9 @@ public class StudentFormSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(StudentFormSyncService.class);
 
-    private static final String CLASSPATH_PREFIX = "classpath:";
-
     private final StudentFormSubmissionRepository submissionRepository;
     private final AdminNotificationService        adminNotificationService;
+    private final GoogleCredentialsResolver        credentialsResolver;
 
     @Value("${google.student-forms.spreadsheet-id:}")
     private String spreadsheetId;
@@ -58,9 +57,11 @@ public class StudentFormSyncService {
     private Sheets sheetsClient;
 
     public StudentFormSyncService(StudentFormSubmissionRepository submissionRepository,
-                                  AdminNotificationService        adminNotificationService) {
+                                  AdminNotificationService        adminNotificationService,
+                                  GoogleCredentialsResolver       credentialsResolver) {
         this.submissionRepository     = submissionRepository;
         this.adminNotificationService = adminNotificationService;
+        this.credentialsResolver      = credentialsResolver;
     }
 
     @Scheduled(fixedDelayString = "${google.student-forms.poll-interval-ms:300000}")
@@ -186,17 +187,7 @@ public class StudentFormSyncService {
     }
 
     private InputStream openCredentials() throws Exception {
-        if (credentialsPath.startsWith(CLASSPATH_PREFIX)) {
-            String resource = credentialsPath.substring(CLASSPATH_PREFIX.length());
-            InputStream in = getClass().getClassLoader().getResourceAsStream(resource);
-            if (in == null) {
-                throw new IllegalStateException(
-                        "Service-account key not found on classpath: " + resource
-                        + " — put the JSON key in src/main/resources or set google.student-forms.credentials-path.");
-            }
-            return in;
-        }
-        return new FileInputStream(credentialsPath);
+        return credentialsResolver.open(credentialsPath);
     }
 
     private static String cell(List<Object> row, int index) {
