@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Mail, Target, FileText, Star, CalendarDays, Trophy, ClipboardList, User,
-  PartyPopper, Sparkles, ArrowRight,
+  ArrowRight,
 } from "lucide-react";
 import Layout from "../../components/Layout";
 import {
   getStudentProfile,
   getEligibleDrives,
   getStudentApplications,
-  getRecentAchievements,
 } from "../../services/studentPortalService";
 import "./StudentDashboard.css";
 
@@ -58,7 +57,6 @@ function StudentDashboard() {
   const [profile,      setProfile]      = useState(null);
   const [eligible,     setEligible]     = useState([]);
   const [apps,         setApps]         = useState([]);
-  const [achievements, setAchievements] = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState(null);
 
@@ -67,13 +65,11 @@ function StudentDashboard() {
       getStudentProfile(),
       getEligibleDrives(),
       getStudentApplications(),
-      getRecentAchievements(),
     ])
-      .then(([p, e, a, ach]) => {
+      .then(([p, e, a]) => {
         setProfile(p.data);
         setEligible(e.data);
         setApps(a.data);
-        setAchievements(ach.data);
         setLoading(false);
       })
       .catch(() => {
@@ -212,34 +208,6 @@ function StudentDashboard() {
             </Link>
           </div>
         </div>
-
-        {/* ── Recent Placement Achievements (public — Selected only) ──────── */}
-        {achievements.length > 0 && (
-          <div className="sd-section-card">
-            <div className="sd-section-head d-flex align-items-center gap-2">
-              <PartyPopper size={16} />
-              Recent Placement Achievements
-            </div>
-            <div className="sd-achievement-list">
-              {achievements.map((a, i) => (
-                <div key={i} className="sd-achievement-row">
-                  <div className="sd-achievement-icon"><Sparkles size={16} color="#7c3aed" /></div>
-                  <div className="sd-achievement-body">
-                    <span className="sd-achievement-name">{a.studentName}</span>
-                    <span className="sd-achievement-text"> selected at </span>
-                    <span className="sd-achievement-company">{a.companyName ?? "—"}</span>
-                    {a.roleOffered && (
-                      <span className="sd-achievement-role"> · {a.roleOffered}</span>
-                    )}
-                  </div>
-                  {a.packageLpa && (
-                    <span className="sd-achievement-pkg">{a.packageLpa} LPA</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* ── My Recent Applications (own data only) ──────────────────────── */}
         {recentApps.length > 0 && (

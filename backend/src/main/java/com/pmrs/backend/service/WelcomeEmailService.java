@@ -10,5 +10,5 @@ public interface WelcomeEmailService {
      * <p>Takes plain Strings (not the Student entity) so the async method,
      * running on a different thread, can't trip over Hibernate lazy-loading.
      */
-    void sendWelcomeEmail(String toEmail, String studentName, String rollNo);
+    void sendWelcomeEmail(String toEmail, String studentName, String rollNo, String temporaryPassword);
 }

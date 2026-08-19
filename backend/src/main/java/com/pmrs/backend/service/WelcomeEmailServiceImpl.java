@@ -33,7 +33,7 @@ public class WelcomeEmailServiceImpl implements WelcomeEmailService {
 
     @Async
     @Override
-    public void sendWelcomeEmail(String toEmail, String studentName, String rollNo) {
+    public void sendWelcomeEmail(String toEmail, String studentName, String rollNo, String temporaryPassword) {
         if (!mailEnabled) {
             log.info("prms.mail.enabled=false — skipping welcome email for roll {}.", rollNo);
             return;
@@ -53,8 +53,8 @@ public class WelcomeEmailServiceImpl implements WelcomeEmailService {
               + "You can log in using:\n"
               + "    Login page          : " + loginUrl + "\n"
               + "    Username / Roll No   : " + rollNo + "\n"
-              + "    Default Password     : " + rollNo + " (same as your roll number)\n\n"
-              + "For security, please change your password immediately after your first login.\n\n"
+              + "    Temporary Password   : " + temporaryPassword + "\n\n"
+              + "You will be required to set a new password the first time you log in.\n\n"
               + "Regards,\n"
               + "Placement Cell";
 

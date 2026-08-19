@@ -19,6 +19,7 @@ const ALL_ITEMS = [
   { path: "/admin/forms",        label: "Forms",        icon: ClipboardList,   roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/penalties",    label: "Penalties",    icon: Scale,           roles: ["ADMIN", "PLACEMENT_OFFICER"] },
   { path: "/admin/officers",     label: "Officers",     icon: ShieldCheck,     roles: ["ADMIN"] },
+  { path: "/admin/staff-accounts", label: "Staff Access", icon: ShieldCheck,   roles: ["ADMIN"] },
 
   // ── Student portal ─────────────────────────────────────────────────────────
   { path: "/student/dashboard",        label: "Dashboard",        icon: LayoutDashboard, roles: ["STUDENT"] },
@@ -26,58 +27,67 @@ const ALL_ITEMS = [
   { path: "/student/eligible-drives",  label: "Eligible Drives",  icon: Target,          roles: ["STUDENT"] },
   { path: "/student/applications",     label: "My Applications",  icon: ClipboardList,   roles: ["STUDENT"] },
   { path: "/student/placement-status", label: "Placement Status", icon: Trophy,          roles: ["STUDENT"] },
+
+  // ── Department Staff (shared, read-only) ────────────────────────────────────
+  { path: "/staff/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["STAFF"] },
 ];
 
-function Sidebar() {
+function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
   const role     = getRole();
 
   const items = ALL_ITEMS.filter((item) => item.roles.includes(role));
 
   return (
-    <div
-      className="bg-light border-end d-flex flex-column"
-      style={{ width: 210, minHeight: "100vh", flexShrink: 0 }}
-    >
-      <div className="p-3 pt-4">
-        <p
-          className="mb-3"
-          style={{
-            fontSize: "0.62rem",
-            fontWeight: 700,
-            color: "#94a3b8",
-            textTransform: "uppercase",
-            letterSpacing: "0.07em",
-            paddingLeft: 4,
-          }}
-        >
-          {role === "STUDENT" ? "Student Portal" : "Navigation"}
-        </p>
+    <>
+      <div
+        className={`sidebar-backdrop ${isOpen ? "show" : ""}`}
+        onClick={onClose}
+      />
+      <div
+        className={`bg-light border-end d-flex flex-column sidebar-drawer ${isOpen ? "sidebar-open" : ""}`}
+      >
+        <div className="p-3 pt-4">
+          <p
+            className="mb-3"
+            style={{
+              fontSize: "0.62rem",
+              fontWeight: 700,
+              color: "#94a3b8",
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+              paddingLeft: 4,
+            }}
+          >
+            {role === "STUDENT" ? "Student Portal" : role === "STAFF" ? "Department Portal" : "Navigation"}
+          </p>
 
-        <ul className="nav flex-column gap-1">
-          {items.map((item) => {
-            const active =
-              item.path === "/admin/dashboard" || item.path === "/student/dashboard"
-                ? location.pathname === item.path
-                : location.pathname.startsWith(item.path);
-            const Icon = item.icon;
+          <ul className="nav flex-column gap-1">
+            {items.map((item) => {
+              const active =
+                item.path === "/admin/dashboard" || item.path === "/student/dashboard" || item.path === "/staff/dashboard"
+                  ? location.pathname === item.path
+                  : location.pathname.startsWith(item.path);
+              const Icon = item.icon;
 
-            return (
-              <li key={item.path} className="nav-item">
-                <Link
-                  className={`nav-link d-flex align-items-center gap-2 sidebar-link ${active ? "active" : ""}`}
-                  to={item.path}
-                >
-                  <Icon size={16} className="sidebar-icon" />
-                  {item.label}
-                  {active && <span className="sidebar-dot" />}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+              return (
+                <li key={item.path} className="nav-item">
+                  <Link
+                    className={`nav-link d-flex align-items-center gap-2 sidebar-link ${active ? "active" : ""}`}
+                    to={item.path}
+                    onClick={onClose}
+                  >
+                    <Icon size={16} className="sidebar-icon" />
+                    {item.label}
+                    {active && <span className="sidebar-dot" />}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

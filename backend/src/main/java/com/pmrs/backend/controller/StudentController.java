@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Student APIs", description = "Operations related to students")
 @RestController
@@ -71,11 +72,18 @@ public class StudentController {
         return studentService.getFilteredStudents(department, program, batchYear);
     }
 
-    // Admin-triggered bulk backfill — creates login accounts (username/temp
-    // password = roll number) for any existing student that doesn't have one yet.
+    // Admin-triggered bulk backfill — creates login accounts (username = roll
+    // number, password = random) for any existing student that doesn't have one yet.
     @Operation(summary = "Backfill login accounts for students that don't have one")
     @PostMapping("/backfill-accounts")
     public ResponseEntity<BackfillResultDTO> backfillAccounts() {
         return ResponseEntity.ok(studentService.backfillStudentAccounts());
+    }
+
+    @Operation(summary = "Regenerate and email a new temporary password for one student's account")
+    @PostMapping("/{id}/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@PathVariable Integer id) {
+        studentService.resetStudentPassword(id);
+        return ResponseEntity.ok(Map.of("message", "New password generated and emailed to the student."));
     }
 }

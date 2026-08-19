@@ -50,6 +50,7 @@ public class DataInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         seedUser("admin",   "admin123",   "admin@pmrs.com",   Role.ADMIN,             null);
         seedUser("officer", "officer123", "officer@pmrs.com", Role.PLACEMENT_OFFICER, null);
+        seedUser("staff",   "staff123",   "staff@pmrs.com",   Role.STAFF,             null);
         seedStudentUser();
     }
 

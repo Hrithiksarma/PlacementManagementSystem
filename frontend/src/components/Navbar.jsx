@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Menu } from "lucide-react";
 import { logout, getUsername, getRole } from "../services/authService";
 import { getStudentProfile } from "../services/studentPortalService";
 
@@ -7,15 +7,17 @@ const ROLE_LABEL = {
   ADMIN:              "Admin",
   PLACEMENT_OFFICER:  "Placement Officer",
   STUDENT:            "Student",
+  STAFF:              "Department Staff",
 };
 
 const ROLE_COLOR = {
   ADMIN:             "#dc2626",
   PLACEMENT_OFFICER: "#2563eb",
   STUDENT:           "#16a34a",
+  STAFF:             "#7c3aed",
 };
 
-function Navbar() {
+function Navbar({ onToggleSidebar }) {
   const username = getUsername();
   const role     = getRole();
 
@@ -44,7 +46,19 @@ function Navbar() {
   }, [role, username]);
 
   return (
-    <nav className="navbar navbar-dark bg-dark px-3" style={{ minHeight: 52 }}>
+    <nav
+      className="navbar navbar-dark bg-dark px-3"
+      style={{ minHeight: 52, position: "relative", zIndex: 1050 }}
+    >
+      <button
+        onClick={onToggleSidebar}
+        className="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center me-2"
+        style={{ padding: "4px 8px" }}
+        aria-label="Toggle navigation"
+      >
+        <Menu size={18} />
+      </button>
+
       <span className="navbar-brand mb-0 fw-bold d-flex align-items-center gap-2" style={{ letterSpacing: "-0.01em" }}>
         <GraduationCap size={20} />
         PRMS — Placement Record Management System

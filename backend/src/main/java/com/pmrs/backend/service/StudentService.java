@@ -30,4 +30,11 @@ public interface StudentService {
     Student importFromSubmission(StudentFormSubmission submission);
 
     BackfillResultDTO backfillStudentAccounts();
+
+    /**
+     * Regenerates a student's temporary password and re-emails it — for a
+     * bounced/lost welcome email or a forgotten password. Forces
+     * mustChangePassword back on. Throws if the student has no login account.
+     */
+    void resetStudentPassword(Integer studentId);
 }

@@ -32,6 +32,7 @@ public class StudentServiceImpl implements StudentService {
     private final PasswordEncoder            passwordEncoder;
     private final WelcomeEmailService        welcomeEmailService;
     private final PlacementPenaltyRepository placementPenaltyRepository;
+    private final TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     public StudentServiceImpl(StudentRepository          studentRepository,
                                DepartmentRepository       departmentRepository,
@@ -39,7 +40,8 @@ public class StudentServiceImpl implements StudentService {
                                UserRepository             userRepository,
                                PasswordEncoder            passwordEncoder,
                                WelcomeEmailService        welcomeEmailService,
-                               PlacementPenaltyRepository placementPenaltyRepository) {
+                               PlacementPenaltyRepository placementPenaltyRepository,
+                               TemporaryPasswordGenerator temporaryPasswordGenerator) {
         this.studentRepository          = studentRepository;
         this.departmentRepository       = departmentRepository;
         this.rollNumberService          = rollNumberService;
@@ -47,6 +49,7 @@ public class StudentServiceImpl implements StudentService {
         this.passwordEncoder            = passwordEncoder;
         this.welcomeEmailService        = welcomeEmailService;
         this.placementPenaltyRepository = placementPenaltyRepository;
+        this.temporaryPasswordGenerator = temporaryPasswordGenerator;
     }
 
     @Override
@@ -228,9 +231,10 @@ public class StudentServiceImpl implements StudentService {
     }
 
     /**
-     * Creates a login for a student that doesn't have one yet. Username and the
-     * temporary password are both the roll number — it's unique, stable, and
-     * already known to the student. mustChangePassword forces them to set a
+     * Creates a login for a student that doesn't have one yet. Username is the
+     * roll number; the password is a random, unguessable temporary password
+     * (same generator used for staff accounts) — never derived from anything
+     * public like the roll number. mustChangePassword forces them to set a
      * real password on first login (enforced both client-side and server-side).
      *
      * <p>Package-private so the Google-Form student-import flow
@@ -245,9 +249,11 @@ public class StudentServiceImpl implements StudentService {
         if (userRepository.existsByUsername(username)) {
             return;
         }
+        String temporaryPassword = temporaryPasswordGenerator.generate();
+
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(username));
+        user.setPassword(passwordEncoder.encode(temporaryPassword));
         user.setEmail(student.getEmail());
         user.setRole(Role.STUDENT);
         user.setStudentId(student.getStudentId());
@@ -256,7 +262,29 @@ public class StudentServiceImpl implements StudentService {
 
         // First (and only) time an account is created for this student — welcome them.
         welcomeEmailService.sendWelcomeEmail(
-                student.getEmail(), student.getName(), student.getRollNo());
+                student.getEmail(), student.getName(), student.getRollNo(), temporaryPassword);
+    }
+
+    /**
+     * Regenerates and re-emails a student's temporary password — for when the
+     * original welcome email bounced/was lost, or the student forgot their
+     * password after already setting one. Forces mustChangePassword back on,
+     * same as the staff-account "reset password" action.
+     */
+    @Override
+    public void resetStudentPassword(Integer studentId) {
+        User user = userRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "This student has no login account yet — use Backfill Accounts first."));
+        Student student = getStudentById(studentId);
+
+        String temporaryPassword = temporaryPasswordGenerator.generate();
+        user.setPassword(passwordEncoder.encode(temporaryPassword));
+        user.setMustChangePassword(true);
+        userRepository.save(user);
+
+        welcomeEmailService.sendWelcomeEmail(
+                student.getEmail(), student.getName(), student.getRollNo(), temporaryPassword);
     }
 
     @Override

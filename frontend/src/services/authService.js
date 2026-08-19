@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const AUTH_URL = "http://localhost:8080/auth";
+const AUTH_URL = `${import.meta.env.VITE_API_URL}/auth`;
 
 // ── Attach JWT to every request ───────────────────────────────────────────────
 axios.interceptors.request.use((config) => {
@@ -29,7 +29,10 @@ axios.interceptors.response.use(
 
     if (error.response?.status === 403 && error.response?.data?.error === "PASSWORD_CHANGE_REQUIRED") {
       const role = localStorage.getItem("role");
-      const changePasswordPath = role === "STUDENT" ? "/student/change-password" : "/admin/change-password";
+      const changePasswordPath =
+        role === "STUDENT" ? "/student/change-password" :
+        role === "STAFF"   ? "/staff/change-password"   :
+                              "/admin/change-password";
       if (path !== changePasswordPath) {
         window.location.href = changePasswordPath;
       }
@@ -72,3 +75,4 @@ export const hasRole    = (role)  => getRole() === role;
 export const hasAnyRole = (roles) => roles.includes(getRole());
 export const isAdmin    = ()      => hasRole("ADMIN");
 export const isOfficer  = ()      => hasRole("PLACEMENT_OFFICER");
+export const isStaff    = ()      => hasRole("STAFF");

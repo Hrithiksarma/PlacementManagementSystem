@@ -6,7 +6,10 @@ function ChangePassword() {
   const navigate = useNavigate();
   const username = getUsername();
   const role     = getRole();
-  const homePath = role === "STUDENT" ? "/student/dashboard" : "/admin/dashboard";
+  const homePath =
+    role === "STUDENT" ? "/student/dashboard" :
+    role === "STAFF"   ? "/staff/dashboard"   :
+                          "/admin/dashboard";
 
   const [form, setForm]       = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [error, setError]     = useState(null);

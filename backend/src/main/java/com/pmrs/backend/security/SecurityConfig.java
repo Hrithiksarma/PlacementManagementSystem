@@ -47,10 +47,12 @@ public class SecurityConfig {
 
                 // ── Public ────────────────────────────────────────────────
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/dashboard/**").permitAll()
                 .requestMatchers(
                     "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                 ).permitAll()
+
+                // ── Dashboard stats: view-only roles, including read-only STAFF ──
+                .requestMatchers("/api/dashboard/**").hasAnyRole("ADMIN", "PLACEMENT_OFFICER", "STAFF")
 
                 // ── Students: read → both roles; mutate → ADMIN only ──────
                 .requestMatchers(HttpMethod.GET,    "/students/**").hasAnyRole("ADMIN", "PLACEMENT_OFFICER")

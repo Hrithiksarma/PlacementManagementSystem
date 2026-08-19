@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/students";
+const API_URL = `${import.meta.env.VITE_API_URL}/students`;
 
 export const getStudents = () => axios.get(API_URL);
 
@@ -15,3 +15,6 @@ export const getFilteredStudents = (department, program, batchYear) =>
 
 export const backfillStudentAccounts = () =>
   axios.post(`${API_URL}/backfill-accounts`);
+
+export const resetStudentPassword = (id) =>
+  axios.post(`${API_URL}/${id}/reset-password`);

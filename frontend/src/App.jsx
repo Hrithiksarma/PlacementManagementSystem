@@ -14,6 +14,7 @@ import Login          from "./pages/Login";
 import AccessDenied   from "./pages/AccessDenied";
 import ChangePassword from "./pages/ChangePassword";
 import ManageOfficers from "./pages/ManageOfficers";
+import ManageStaff    from "./pages/ManageStaff";
 import FormSubmissions from "./pages/FormSubmissions";
 import Penalties       from "./pages/Penalties";
 import HrContacts      from "./pages/HrContacts";
@@ -27,6 +28,7 @@ import PlacementStatus  from "./pages/student/PlacementStatus";
 import StudentRoute    from "./routes/StudentRoute";
 import AdminRoute      from "./routes/AdminRoute";
 import SuperAdminRoute from "./routes/SuperAdminRoute";
+import StaffRoute      from "./routes/StaffRoute";
 import RoleRedirect    from "./routes/RoleRedirect";
 
 function App() {
@@ -97,6 +99,17 @@ function App() {
         } />
         <Route path="/admin/officers" element={
           <SuperAdminRoute><ManageOfficers /></SuperAdminRoute>
+        } />
+        <Route path="/admin/staff-accounts" element={
+          <SuperAdminRoute><ManageStaff /></SuperAdminRoute>
+        } />
+
+        {/* ── Department Staff (shared, read-only account) ─────────── */}
+        <Route path="/staff/change-password" element={
+          <StaffRoute><ChangePassword /></StaffRoute>
+        } />
+        <Route path="/staff/dashboard" element={
+          <StaffRoute><Dashboard /></StaffRoute>
         } />
 
         {/* ── Catch-all ────────────────────────────────────────────── */}

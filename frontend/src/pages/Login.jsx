@@ -9,6 +9,7 @@ const PORTALS = [
   { value: "ADMIN",             label: "Admin" },
   { value: "PLACEMENT_OFFICER", label: "Placement Cell" },
   { value: "STUDENT",           label: "Student" },
+  { value: "STAFF",             label: "Department Staff" },
 ];
 const PORTAL_LABEL = Object.fromEntries(PORTALS.map((p) => [p.value, p.label]));
 
@@ -50,6 +51,8 @@ function Login() {
 
       if (role === "STUDENT") {
         navigate(res.data.mustChangePassword ? "/student/change-password" : "/student/dashboard", { replace: true });
+      } else if (role === "STAFF") {
+        navigate(res.data.mustChangePassword ? "/staff/change-password" : "/staff/dashboard", { replace: true });
       } else if (["ADMIN", "PLACEMENT_OFFICER"].includes(role)) {
         navigate(res.data.mustChangePassword ? "/admin/change-password" : "/admin/dashboard", { replace: true });
       } else {
