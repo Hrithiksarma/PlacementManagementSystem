@@ -49,6 +49,11 @@ public class DashboardDTO {
     private List<RecruiterDTO> topRecruiters;
     private List<ActivityDTO> recentActivities;
 
+    // Program (B.Tech/M.Tech) x branch statistics matrix, and the full list of
+    // companies that placed at least one student (unranked, unlike topRecruiters).
+    private List<ProgramStatsDTO> programStats;
+    private List<String> placedCompanies;
+
     // ─── Getters / Setters ─────────────────────────────────────────────────────
 
     public long getTotalStudents() { return totalStudents; }
@@ -138,6 +143,12 @@ public class DashboardDTO {
     public List<ActivityDTO> getRecentActivities() { return recentActivities; }
     public void setRecentActivities(List<ActivityDTO> recentActivities) { this.recentActivities = recentActivities; }
 
+    public List<ProgramStatsDTO> getProgramStats() { return programStats; }
+    public void setProgramStats(List<ProgramStatsDTO> programStats) { this.programStats = programStats; }
+
+    public List<String> getPlacedCompanies() { return placedCompanies; }
+    public void setPlacedCompanies(List<String> placedCompanies) { this.placedCompanies = placedCompanies; }
+
     // ─── Nested DTOs ───────────────────────────────────────────────────────────
 
     public static class TrendPointDTO {
@@ -210,5 +221,55 @@ public class DashboardDTO {
 
         public String getApplicationDate() { return applicationDate; }
         public void setApplicationDate(String applicationDate) { this.applicationDate = applicationDate; }
+    }
+
+    public static class ProgramStatsDTO {
+        private String program;
+        private List<BranchCategoryStatsDTO> categories;
+
+        public String getProgram() { return program; }
+        public void setProgram(String program) { this.program = program; }
+
+        public List<BranchCategoryStatsDTO> getCategories() { return categories; }
+        public void setCategories(List<BranchCategoryStatsDTO> categories) { this.categories = categories; }
+    }
+
+    public static class BranchCategoryStatsDTO {
+        private String branch;
+        private long totalRegistered;
+        private long optedForHigherStudies;
+        private long totalJobsOffered;
+        private long totalSelected;
+        private double percentagePlaced;
+        private double averageSalary;
+        private double medianSalary;
+        private double highestSalary;
+
+        public String getBranch() { return branch; }
+        public void setBranch(String branch) { this.branch = branch; }
+
+        public long getTotalRegistered() { return totalRegistered; }
+        public void setTotalRegistered(long totalRegistered) { this.totalRegistered = totalRegistered; }
+
+        public long getOptedForHigherStudies() { return optedForHigherStudies; }
+        public void setOptedForHigherStudies(long v) { this.optedForHigherStudies = v; }
+
+        public long getTotalJobsOffered() { return totalJobsOffered; }
+        public void setTotalJobsOffered(long totalJobsOffered) { this.totalJobsOffered = totalJobsOffered; }
+
+        public long getTotalSelected() { return totalSelected; }
+        public void setTotalSelected(long totalSelected) { this.totalSelected = totalSelected; }
+
+        public double getPercentagePlaced() { return percentagePlaced; }
+        public void setPercentagePlaced(double percentagePlaced) { this.percentagePlaced = percentagePlaced; }
+
+        public double getAverageSalary() { return averageSalary; }
+        public void setAverageSalary(double averageSalary) { this.averageSalary = averageSalary; }
+
+        public double getMedianSalary() { return medianSalary; }
+        public void setMedianSalary(double medianSalary) { this.medianSalary = medianSalary; }
+
+        public double getHighestSalary() { return highestSalary; }
+        public void setHighestSalary(double highestSalary) { this.highestSalary = highestSalary; }
     }
 }

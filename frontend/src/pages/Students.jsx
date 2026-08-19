@@ -4,6 +4,7 @@ import Layout from "../components/Layout";
 import {
   deleteStudent,
   getFilteredStudents,
+  resetStudentPassword,
   updateStudent,
 } from "../services/studentService";
 import { isAdmin } from "../services/authService";
@@ -70,8 +71,25 @@ function StudentDetailsModal({ student, onClose, onSave }) {
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   if (!student) return null;
+
+  const handleResetPassword = async () => {
+    if (!window.confirm(
+      `Generate a new temporary password and email it to ${student.name} (${student.email})?`
+    )) return;
+    setResettingPassword(true);
+    try {
+      await resetStudentPassword(student.studentId);
+      alert("New password generated and emailed to the student.");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message ?? "Failed to reset password.");
+    } finally {
+      setResettingPassword(false);
+    }
+  };
 
   const field = (label, value) => (
     <div className="col-md-6 mb-2">
@@ -93,6 +111,7 @@ function StudentDetailsModal({ student, onClose, onSave }) {
       cgpa: student.cgpa ?? "",
       activeBacklogs: student.activeBacklogs ?? "",
       placementTier: student.placementTier ?? "Unplaced",
+      optedForHigherStudies: student.optedForHigherStudies ?? false,
       resumeUrl: student.resumeUrl ?? "",
       photoUrl: student.photoUrl ?? "",
       gradeSheetUrl: student.gradeSheetUrl ?? "",
@@ -119,6 +138,7 @@ function StudentDetailsModal({ student, onClose, onSave }) {
         cgpa: form.cgpa === "" ? null : parseFloat(form.cgpa),
         activeBacklogs: form.activeBacklogs === "" ? null : parseInt(form.activeBacklogs, 10),
         placementTier: form.placementTier,
+        optedForHigherStudies: form.optedForHigherStudies,
         resumeUrl: form.resumeUrl || null,
         photoUrl: form.photoUrl || null,
         gradeSheetUrl: form.gradeSheetUrl || null,
@@ -159,9 +179,18 @@ function StudentDetailsModal({ student, onClose, onSave }) {
           </div>
           <div className="d-flex align-items-center gap-2">
             {!isEditing && (
-              <button className="btn btn-sm action-edit" onClick={startEdit}>
-                Edit
-              </button>
+              <>
+                <button
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={handleResetPassword}
+                  disabled={resettingPassword}
+                >
+                  {resettingPassword ? "Sending…" : "Reset Password"}
+                </button>
+                <button className="btn btn-sm action-edit" onClick={startEdit}>
+                  Edit
+                </button>
+              </>
             )}
             <button className="btn-close" onClick={onClose} aria-label="Close" />
           </div>
@@ -183,6 +212,7 @@ function StudentDetailsModal({ student, onClose, onSave }) {
               {field("CGPA", student.cgpa)}
               {field("Active Backlogs", student.activeBacklogs)}
               {field("Placement Tier", tierLabelFor(student.placementTier))}
+              {field("Higher Studies", student.optedForHigherStudies ? "Yes" : "No")}
             </div>
 
             <hr />
@@ -221,6 +251,20 @@ function StudentDetailsModal({ student, onClose, onSave }) {
                     <option key={t} value={t}>{tierLabelFor(t)}</option>
                   ))}
                 </select>
+              </div>
+              <div className="col-md-6 d-flex align-items-end">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="optedForHigherStudies"
+                    checked={form.optedForHigherStudies}
+                    onChange={(e) => setForm({ ...form, optedForHigherStudies: e.target.checked })}
+                  />
+                  <label className="form-check-label" htmlFor="optedForHigherStudies">
+                    Opted for Higher Studies
+                  </label>
+                </div>
               </div>
               <div className="col-md-6">
                 <label className="form-label">CGPA</label>

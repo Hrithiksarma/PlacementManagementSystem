@@ -161,6 +161,50 @@ function Skeleton({ h = 80, r = 10 }) {
   return <div className="dash-skeleton" style={{ height: h, borderRadius: r }} />;
 }
 
+const PROGRAM_STATS_ROWS = [
+  { label: "Total Registered",           key: "totalRegistered" },
+  { label: "Opted for Higher Studies",   key: "optedForHigherStudies" },
+  { label: "Total Jobs Offered",         key: "totalJobsOffered" },
+  { label: "Average Salary",             key: "averageSalary",   isSalary: true },
+  { label: "Median Salary",              key: "medianSalary",    isSalary: true },
+  { label: "Total Students Selected",    key: "totalSelected" },
+  { label: "Highest Salary",             key: "highestSalary",   isSalary: true },
+  { label: "Percentage Placed",          key: "percentagePlaced", isPercent: true },
+];
+
+function ProgramStatsTable({ programStat }) {
+  const categories = programStat.categories ?? [];
+  return (
+    <div>
+      <div className="program-stats-title">{programStat.program} Placement</div>
+      <div className="table-responsive">
+        <table className="table table-bordered table-sm text-center align-middle mb-0 program-stats-table">
+          <thead>
+            <tr>
+              <th className="text-start">Category</th>
+              {categories.map((c) => <th key={c.branch}>{c.branch}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {PROGRAM_STATS_ROWS.map((row) => (
+              <tr key={row.key}>
+                <td className="text-start fw-semibold">{row.label}</td>
+                {categories.map((c) => (
+                  <td key={c.branch}>
+                    {row.isPercent ? `${fmt(c[row.key], 1)}%`
+                      : row.isSalary ? (c[row.key] > 0 ? `${fmt(c[row.key], 1)} LPA` : "—")
+                      : fmt(c[row.key])}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ─── KPI Cards ────────────────────────────────────────────────────────────────
 
 function KpiCard({ icon, label, value, accent, sub }) {
@@ -570,6 +614,42 @@ function Dashboard() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* ── Placement Statistics by Program (B.Tech / M.Tech × branch) ──── */}
+        {(data.programStats?.length ?? 0) > 0 && (
+          <div className="dash-card">
+            <SectionHeader
+              title="Placement Statistics by Program"
+              sub="Category-wise breakdown, current selection"
+              badge={activeBadge}
+            />
+            <div className="d-flex flex-column gap-4">
+              {data.programStats.map((ps) => (
+                <ProgramStatsTable key={ps.program} programStat={ps} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Companies Placed ─────────────────────────────────────────── */}
+        <div className="dash-card">
+          <SectionHeader
+            title="Companies Placed"
+            sub={(data.placedCompanies?.length ?? 0) > 0
+              ? `${data.placedCompanies.length} compan${data.placedCompanies.length !== 1 ? "ies" : "y"}`
+              : undefined}
+            badge={activeBadge}
+          />
+          {!(data.placedCompanies?.length) ? (
+            <EmptyState message="No companies have placed students yet" />
+          ) : (
+            <div className="placed-companies-list">
+              {data.placedCompanies.map((name) => (
+                <span key={name} className="placed-company-chip">{name}</span>
+              ))}
+            </div>
           )}
         </div>
 

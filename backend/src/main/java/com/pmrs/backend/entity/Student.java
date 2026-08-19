@@ -3,6 +3,8 @@ package com.pmrs.backend.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "Students")
 public class Student {
@@ -50,6 +52,9 @@ public class Student {
     @Column(name = "placement_tier")
     private String placementTier;
 
+    @Column(name = "opted_for_higher_studies")
+    private Boolean optedForHigherStudies = false;
+
     /** Google Drive URL of the resume PDF the student uploaded via the form. */
     @Column(name = "resume_url", length = 500)
     private String resumeUrl;
@@ -61,6 +66,20 @@ public class Student {
     /** Google Drive URL of the grade card / gradesheet uploaded via the form. */
     @Column(name = "grade_sheet_url", length = 500)
     private String gradeSheetUrl;
+
+    /** Plain text extracted from resumeUrl via DocumentTextExtractionService —
+     *  cached so the resume/JD skills-gap analyzer doesn't re-download and
+     *  re-parse the same resume on every analysis request. */
+    @Column(name = "resume_text_cache", columnDefinition = "TEXT")
+    private String resumeTextCache;
+
+    /** The resumeUrl value resumeTextCache was extracted from — if resumeUrl no
+     *  longer matches this, the cache is stale and needs re-extracting. */
+    @Column(name = "resume_text_source_url", length = 500)
+    private String resumeTextSourceUrl;
+
+    @Column(name = "resume_text_extracted_at")
+    private LocalDateTime resumeTextExtractedAt;
 
     public Integer getStudentId() {
         return studentId;
@@ -142,6 +161,14 @@ public class Student {
         this.placementTier = placementTier;
     }
 
+    public Boolean getOptedForHigherStudies() {
+        return optedForHigherStudies;
+    }
+
+    public void setOptedForHigherStudies(Boolean optedForHigherStudies) {
+        this.optedForHigherStudies = optedForHigherStudies;
+    }
+
     public String getResumeUrl() {
         return resumeUrl;
     }
@@ -164,5 +191,29 @@ public class Student {
 
     public void setGradeSheetUrl(String gradeSheetUrl) {
         this.gradeSheetUrl = gradeSheetUrl;
+    }
+
+    public String getResumeTextCache() {
+        return resumeTextCache;
+    }
+
+    public void setResumeTextCache(String resumeTextCache) {
+        this.resumeTextCache = resumeTextCache;
+    }
+
+    public String getResumeTextSourceUrl() {
+        return resumeTextSourceUrl;
+    }
+
+    public void setResumeTextSourceUrl(String resumeTextSourceUrl) {
+        this.resumeTextSourceUrl = resumeTextSourceUrl;
+    }
+
+    public LocalDateTime getResumeTextExtractedAt() {
+        return resumeTextExtractedAt;
+    }
+
+    public void setResumeTextExtractedAt(LocalDateTime resumeTextExtractedAt) {
+        this.resumeTextExtractedAt = resumeTextExtractedAt;
     }
 }

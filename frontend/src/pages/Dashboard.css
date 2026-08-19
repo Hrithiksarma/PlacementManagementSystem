@@ -200,6 +200,51 @@
   margin-left: auto;
 }
 
+/* ── Program stats table (B.Tech / M.Tech × branch matrix) ────────────────── */
+
+.program-stats-table {
+  font-size: 0.8rem;
+}
+
+.program-stats-table thead th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.program-stats-table td,
+.program-stats-table th {
+  padding: 6px 10px;
+}
+
+.program-stats-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+/* ── Companies Placed list ─────────────────────────────────────────────── */
+
+.placed-companies-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.placed-company-chip {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+
 /* ── KPI Cards ──────────────────────────────────────────────────────────── */
 
 .kpi-card {

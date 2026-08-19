@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -41,6 +42,73 @@ public class DashboardServiceImpl implements DashboardService {
 
     private static boolean isFiltered(String val) {
         return val != null && !val.isEmpty() && !"All".equalsIgnoreCase(val);
+    }
+
+    private static boolean isPlaced(Student s) {
+        return s.getPlacementTier() != null && !s.getPlacementTier().equalsIgnoreCase("Unplaced");
+    }
+
+    /** Returns {highest, average, median} for a list of package/salary values, all 0 if empty. */
+    private static double[] packageStats(List<Double> values) {
+        if (values.isEmpty()) {
+            return new double[]{0, 0, 0};
+        }
+        List<Double> sorted = values.stream().sorted().collect(Collectors.toList());
+        double highest = sorted.get(sorted.size() - 1);
+        double avg = sorted.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        int mid = sorted.size() / 2;
+        double median = sorted.size() % 2 == 0
+                ? (sorted.get(mid - 1) + sorted.get(mid)) / 2.0
+                : sorted.get(mid);
+        return new double[]{
+                Math.round(highest * 10.0) / 10.0,
+                Math.round(avg * 10.0) / 10.0,
+                Math.round(median * 10.0) / 10.0
+        };
+    }
+
+    /** Computes registered/higher-studies/jobs-offered/selected/salary stats for one program+branch group. */
+    private static DashboardDTO.BranchCategoryStatsDTO computeCategoryStats(
+            String label, List<Student> group, List<Application> allApplications) {
+        DashboardDTO.BranchCategoryStatsDTO stats = new DashboardDTO.BranchCategoryStatsDTO();
+        stats.setBranch(label);
+        stats.setTotalRegistered(group.size());
+
+        stats.setOptedForHigherStudies(group.stream()
+                .filter(s -> Boolean.TRUE.equals(s.getOptedForHigherStudies()))
+                .count());
+
+        Set<Integer> groupIds = group.stream()
+                .map(Student::getStudentId)
+                .collect(Collectors.toSet());
+
+        List<Application> groupSelectedApps = allApplications.stream()
+                .filter(a -> a.getStudent() != null && groupIds.contains(a.getStudent().getStudentId()))
+                .filter(a -> "Selected".equalsIgnoreCase(a.getStatus()))
+                .collect(Collectors.toList());
+        stats.setTotalJobsOffered(groupSelectedApps.size());
+
+        long selectedStudents = group.stream().filter(DashboardServiceImpl::isPlaced).count();
+        stats.setTotalSelected(selectedStudents);
+        stats.setPercentagePlaced(group.isEmpty() ? 0
+                : Math.round((selectedStudents * 100.0 / group.size()) * 10.0) / 10.0);
+
+        // Each placed student's best ("Selected") offer — handles students holding
+        // multiple offers by taking the highest package among them.
+        Map<Integer, Double> bestOfferByStudent = new HashMap<>();
+        groupSelectedApps.stream()
+                .filter(a -> a.getDrive() != null && a.getDrive().getPackageLpa() != null)
+                .forEach(a -> bestOfferByStudent.merge(
+                        a.getStudent().getStudentId(),
+                        a.getDrive().getPackageLpa().doubleValue(),
+                        Math::max));
+
+        double[] salaryStats = packageStats(new ArrayList<>(bestOfferByStudent.values()));
+        stats.setHighestSalary(salaryStats[0]);
+        stats.setAverageSalary(salaryStats[1]);
+        stats.setMedianSalary(salaryStats[2]);
+
+        return stats;
     }
 
     @Override
@@ -117,19 +185,12 @@ public class DashboardServiceImpl implements DashboardService {
         List<Double> packages = drives.stream()
                 .filter(d -> d.getPackageLpa() != null)
                 .map(d -> d.getPackageLpa().doubleValue())
-                .sorted()
                 .collect(Collectors.toList());
 
-        if (!packages.isEmpty()) {
-            dto.setHighestPackage(packages.stream().mapToDouble(Double::doubleValue).max().orElse(0));
-            double avg = packages.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-            dto.setAveragePackage(Math.round(avg * 10.0) / 10.0);
-            int mid = packages.size() / 2;
-            double median = packages.size() % 2 == 0
-                    ? (packages.get(mid - 1) + packages.get(mid)) / 2.0
-                    : packages.get(mid);
-            dto.setMedianPackage(Math.round(median * 10.0) / 10.0);
-        }
+        double[] globalPackageStats = packageStats(packages);
+        dto.setHighestPackage(globalPackageStats[0]);
+        dto.setAveragePackage(globalPackageStats[1]);
+        dto.setMedianPackage(globalPackageStats[2]);
 
         // ── Drive statistics (all drives, not cohort-filtered) ────────────────
         dto.setUpcomingDrives(drives.stream()
@@ -201,6 +262,41 @@ public class DashboardServiceImpl implements DashboardService {
                 .collect(Collectors.toList());
         dto.setBranchWisePlacement(branchList);
 
+        // ── Program × branch statistics matrix (year-filtered only — branch and
+        // program are the pivot dimensions here, so the dashboard's own branch/
+        // program dropdowns don't apply to this table) ─────────────────────────
+        List<Student> yearPool = allStudents.stream()
+                .filter(s -> year == null || year.equals(s.getBatchYear()))
+                .collect(Collectors.toList());
+
+        Map<String, List<Student>> byProgram = yearPool.stream()
+                .filter(s -> s.getDepartment() != null && s.getDepartment().getProgram() != null)
+                .collect(Collectors.groupingBy(s -> s.getDepartment().getProgram()));
+
+        List<DashboardDTO.ProgramStatsDTO> programStatsList = byProgram.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> {
+                    String programName = e.getKey();
+                    List<Student> programStudents = e.getValue();
+
+                    Map<String, List<Student>> byBranchInProgram = programStudents.stream()
+                            .filter(s -> s.getDepartment().getBranch() != null)
+                            .collect(Collectors.groupingBy(s -> s.getDepartment().getBranch()));
+
+                    List<DashboardDTO.BranchCategoryStatsDTO> categories = byBranchInProgram.entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey())
+                            .map(be -> computeCategoryStats(be.getKey(), be.getValue(), allApplications))
+                            .collect(Collectors.toList());
+                    categories.add(computeCategoryStats("Overall", programStudents, allApplications));
+
+                    DashboardDTO.ProgramStatsDTO p = new DashboardDTO.ProgramStatsDTO();
+                    p.setProgram(programName);
+                    p.setCategories(categories);
+                    return p;
+                })
+                .collect(Collectors.toList());
+        dto.setProgramStats(programStatsList);
+
         // ── Top recruiters (filtered — selections from cohort students) ────────
         Map<String, long[]> recruiterData = new LinkedHashMap<>();
         Map<String, String> recruiterTier = new HashMap<>();
@@ -231,6 +327,17 @@ public class DashboardServiceImpl implements DashboardService {
                 })
                 .collect(Collectors.toList());
         dto.setTopRecruiters(recruiters);
+
+        // ── Full companies-placed list (filtered, unranked, uncapped — unlike topRecruiters) ──
+        List<String> placedCompanies = applications.stream()
+                .filter(a -> "Selected".equalsIgnoreCase(a.getStatus())
+                        && a.getDrive() != null
+                        && a.getDrive().getCompany() != null)
+                .map(a -> a.getDrive().getCompany().getCompanyName())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+        dto.setPlacedCompanies(placedCompanies);
 
         // ── Recent activities (filtered — latest 10 from cohort students) ──────
         List<DashboardDTO.ActivityDTO> activities = applications.stream()
