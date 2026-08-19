@@ -1,5 +1,6 @@
 package com.pmrs.backend.config;
 
+import com.pmrs.backend.entity.Department;
 import com.pmrs.backend.entity.Role;
 import com.pmrs.backend.entity.Student;
 import com.pmrs.backend.entity.User;
@@ -48,10 +49,34 @@ public class DataInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        seedDepartments();
         seedUser("admin",   "admin123",   "admin@pmrs.com",   Role.ADMIN,             null);
         seedUser("officer", "officer123", "officer@pmrs.com", Role.PLACEMENT_OFFICER, null);
         seedUser("staff",   "staff123",   "staff@pmrs.com",   Role.STAFF,             null);
         seedStudentUser();
+    }
+
+    // Departments are otherwise only ever created through the admin UI — on a
+    // brand new database there are none yet, which breaks the seed student
+    // below (no department means no roll number, and roll_no is NOT NULL) and
+    // leaves nothing for an admin to assign real students to. Seed IIITG's
+    // actual CSE/ECE x B.Tech/M.Tech structure once, if the table is empty.
+    private void seedDepartments() {
+        if (departmentRepository.count() > 0) {
+            return;
+        }
+        seedDepartment("Computer Science and Engineering", "B.Tech", "CSE");
+        seedDepartment("Electronics and Communication Engineering", "B.Tech", "ECE");
+        seedDepartment("Computer Science and Engineering", "M.Tech", "CSE");
+        seedDepartment("Electronics and Communication Engineering", "M.Tech", "ECE");
+    }
+
+    private void seedDepartment(String deptName, String program, String branch) {
+        Department d = new Department();
+        d.setDeptName(deptName);
+        d.setProgram(program);
+        d.setBranch(branch);
+        departmentRepository.save(d);
     }
 
     // Demo/fixed accounts have a known password up front, so they're never
