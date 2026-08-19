@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/external-hrcontacts";
+const API_URL = `${import.meta.env.VITE_API_URL}/external-hrcontacts`;
 
 export const addExternalHrContact = (contact) => axios.post(API_URL, contact);
 

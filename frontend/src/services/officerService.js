@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/admin/officers";
+const API_URL = `${import.meta.env.VITE_API_URL}/admin/officers`;
 
 export const getOfficers = () => axios.get(API_URL);
 

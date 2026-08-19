@@ -97,6 +97,13 @@
 			<artifactId>google-api-services-sheets</artifactId>
 			<version>v4-rev20240826-2.0.0</version>
 		</dependency>
+		<!-- PDF text extraction — used to pull plain text out of resume/JD PDFs
+		     downloaded from Google Drive links, for the resume/JD skills-gap analyzer -->
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>3.0.3</version>
+		</dependency>
 		<dependency>
 			<groupId>com.google.auth</groupId>
 			<artifactId>google-auth-library-oauth2-http</artifactId>

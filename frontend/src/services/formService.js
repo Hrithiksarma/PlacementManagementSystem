@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/form-submissions";
+const API_URL = `${import.meta.env.VITE_API_URL}/form-submissions`;
 
 export const getSubmissions = (status) =>
   axios.get(API_URL, { params: { status } });

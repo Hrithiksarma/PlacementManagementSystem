@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = "http://localhost:8080/api/student";
+const BASE = `${import.meta.env.VITE_API_URL}/api/student`;
 
 export const getStudentProfile      = ()         => axios.get(`${BASE}/profile`);
 export const getEligibleDrives      = ()         => axios.get(`${BASE}/eligible-drives`);

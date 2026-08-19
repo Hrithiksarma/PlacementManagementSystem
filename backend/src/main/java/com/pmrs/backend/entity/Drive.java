@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Drives")
@@ -56,6 +57,20 @@ public class Drive {
 
     @Column(name = "max_backlogs")
     private Integer maxBacklogs;
+
+    /** Google Drive URL of the job description document, copied over from the
+     *  originating DriveFormSubmission (or entered manually for drives added
+     *  directly). Null until a JD is set. */
+    @Column(name = "jd_url", length = 500)
+    private String jdUrl;
+
+    /** Plain text extracted from jdUrl via DocumentTextExtractionService — the
+     *  input used by the resume/JD skills-gap analyzer. */
+    @Column(name = "jd_text", columnDefinition = "TEXT")
+    private String jdText;
+
+    @Column(name = "jd_extracted_at")
+    private LocalDateTime jdExtractedAt;
 
     public Integer getDriveId() {
         return driveId;
@@ -159,5 +174,29 @@ public class Drive {
 
     public void setMaxBacklogs(Integer maxBacklogs) {
         this.maxBacklogs = maxBacklogs;
+    }
+
+    public String getJdUrl() {
+        return jdUrl;
+    }
+
+    public void setJdUrl(String jdUrl) {
+        this.jdUrl = jdUrl;
+    }
+
+    public String getJdText() {
+        return jdText;
+    }
+
+    public void setJdText(String jdText) {
+        this.jdText = jdText;
+    }
+
+    public LocalDateTime getJdExtractedAt() {
+        return jdExtractedAt;
+    }
+
+    public void setJdExtractedAt(LocalDateTime jdExtractedAt) {
+        this.jdExtractedAt = jdExtractedAt;
     }
 }

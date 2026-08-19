@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/drives";
+const API_URL = `${import.meta.env.VITE_API_URL}/drives`;
 
 export const getAllDrives = () => axios.get(API_URL);
 
