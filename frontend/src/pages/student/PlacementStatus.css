@@ -374,9 +374,20 @@
 @media (max-width: 540px) {
   .ps-tracker-card { padding: 18px 16px; }
   .ps-track-wrap { padding: 9px 10px 44px; }
-  .ps-track-label { font-size: 0.55rem; }
+  .ps-track-label {
+    font-size: 0.55rem;
+    /* Long labels ("Interview Scheduled") nowrap-on-one-line at this width
+       collide with neighboring stage labels — wrap onto 2 lines instead,
+       capped narrow enough that adjacent stages' labels can't overlap. */
+    white-space: normal;
+    max-width: 62px;
+    text-align: center;
+    line-height: 1.15;
+  }
   .ps-track-stage:first-child { align-items: flex-start; transform: translate(0, -50%); }
   .ps-track-stage:last-child  { align-items: flex-end; transform: translate(-100%, -50%); }
+  .ps-track-stage:first-child .ps-track-label { text-align: left; }
+  .ps-track-stage:last-child  .ps-track-label { text-align: right; }
 }
 
 /* ── Pending offer card (Selected, awaiting student decision) ──────────── */

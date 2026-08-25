@@ -215,7 +215,7 @@ function FormSubmissions() {
           {showNotifications && (
             <div
               className="card position-absolute end-0 mt-2 shadow"
-              style={{ width: 340, maxHeight: 400, overflowY: "auto", zIndex: 1060 }}
+              style={{ width: "min(340px, 92vw)", maxHeight: 400, overflowY: "auto", zIndex: 1060 }}
             >
               <div className="card-body p-2">
                 <div className="fw-semibold mb-2" style={{ fontSize: "0.85rem" }}>Notifications</div>
@@ -299,6 +299,7 @@ function FormSubmissions() {
             <p className="text-muted mb-2">
               <strong>{notSubmitted.length}</strong> company(ies) in PRMS have not submitted the form yet.
             </p>
+            <div className="table-responsive">
             <table className="table table-striped table-bordered table-hover">
               <thead className="table-dark">
                 <tr>
@@ -325,6 +326,7 @@ function FormSubmissions() {
                 ))}
               </tbody>
             </table>
+            </div>
           </>
         )
       ) : submissions.length === 0 ? (
@@ -336,6 +338,7 @@ function FormSubmissions() {
           <p className="text-muted mb-2">
             Showing <strong>{submissions.length}</strong> submission(s)
           </p>
+          <div className="table-responsive">
           <table className="table table-striped table-bordered table-hover">
             <thead className="table-dark">
               <tr>
@@ -445,6 +448,7 @@ function FormSubmissions() {
               })}
             </tbody>
           </table>
+          </div>
         </>
       )}
       </>

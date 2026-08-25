@@ -352,6 +352,7 @@ function Drives() {
               No drives found for selected filters.
             </div>
           ) : (
+            <div className="table-responsive">
             <table className="table table-striped table-bordered table-hover">
               <thead className="table-dark">
                 <tr>
@@ -444,6 +445,7 @@ function Drives() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </>
       )}

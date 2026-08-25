@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { GraduationCap, Menu } from "lucide-react";
 import { logout, getUsername, getRole } from "../services/authService";
 import { getStudentProfile } from "../services/studentPortalService";
+import "./Navbar.css";
 
 const ROLE_LABEL = {
   ADMIN:              "Admin",
@@ -59,13 +60,14 @@ function Navbar({ onToggleSidebar }) {
         <Menu size={18} />
       </button>
 
-      <span className="navbar-brand mb-0 fw-bold d-flex align-items-center gap-2" style={{ letterSpacing: "-0.01em" }}>
-        <GraduationCap size={20} />
-        PRMS — Placement Record Management System
+      <span className="navbar-brand navbar-brand-text mb-0 fw-bold d-flex align-items-center gap-2" style={{ letterSpacing: "-0.01em" }}>
+        <GraduationCap size={20} style={{ flexShrink: 0 }} />
+        <span className="d-none d-sm-inline">PRMS — Placement Record Management System</span>
+        <span className="d-inline d-sm-none">PRMS</span>
       </span>
 
       {username && (
-        <div className="d-flex align-items-center gap-3">
+        <div className="d-flex align-items-center gap-3 navbar-user-block">
           <div className="d-flex align-items-center gap-2">
             <span
               style={{
@@ -79,7 +81,7 @@ function Navbar({ onToggleSidebar }) {
               {(displayName || username).charAt(0).toUpperCase()}
             </span>
             <div style={{ lineHeight: 1.2 }}>
-              <div style={{ fontSize: "0.82rem", color: "#f1f5f9", fontWeight: 600 }}>
+              <div className="navbar-user-name" style={{ fontSize: "0.82rem", color: "#f1f5f9", fontWeight: 600 }}>
                 {displayName || username}
               </div>
               <div style={{ fontSize: "0.68rem", color: "#94a3b8" }}>
@@ -91,7 +93,7 @@ function Navbar({ onToggleSidebar }) {
           <button
             onClick={logout}
             className="btn btn-outline-light btn-sm"
-            style={{ fontSize: "0.75rem", padding: "4px 12px" }}
+            style={{ fontSize: "0.75rem", padding: "4px 12px", flexShrink: 0 }}
           >
             Logout
           </button>

@@ -112,6 +112,7 @@ function Penalties() {
             Showing <strong>{displayed.length}</strong> penalt{displayed.length === 1 ? "y" : "ies"}
             {!showAll && ` (${activeCount} active)`}
           </p>
+          <div className="table-responsive">
           <table className="table table-striped table-bordered table-hover table-sm">
             <thead className="table-dark">
               <tr>
@@ -183,6 +184,7 @@ function Penalties() {
               })}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </Layout>

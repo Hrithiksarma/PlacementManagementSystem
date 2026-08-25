@@ -240,6 +240,7 @@ function Companies() {
               No companies found for selected filters.
             </div>
           ) : (
+            <div className="table-responsive">
             <table className="table table-striped table-bordered table-hover">
               <thead className="table-dark">
                 <tr>
@@ -283,6 +284,7 @@ function Companies() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </>
       )}

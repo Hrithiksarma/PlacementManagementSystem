@@ -1,0 +1,25 @@
+/* Bootstrap's .navbar-brand forces white-space: nowrap, so a long brand
+   string alone can force horizontal overflow on narrow screens regardless
+   of the navbar's own flex-wrap — let it shrink/truncate instead. */
+.navbar-brand-text {
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+}
+
+.navbar-user-block {
+  flex-shrink: 0;
+}
+
+.navbar-user-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+  .navbar-user-name {
+    max-width: 90px;
+  }
+}

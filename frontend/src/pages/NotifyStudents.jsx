@@ -216,6 +216,7 @@ function NotifyStudents() {
           ) : students.length === 0 ? (
             <div className="alert alert-warning">No eligible students found for this drive.</div>
           ) : (
+            <div className="table-responsive">
             <table className="table table-striped table-bordered table-hover">
               <thead className="table-dark">
                 <tr>
@@ -253,6 +254,7 @@ function NotifyStudents() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </>
       )}

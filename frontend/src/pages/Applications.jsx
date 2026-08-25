@@ -409,6 +409,7 @@ function Applications() {
             </ul>
           </div>
         ) : (
+          <div className="table-responsive">
           <table className="table table-striped table-hover applications-table">
             <thead className="table-dark">
               <tr>
@@ -551,6 +552,7 @@ function Applications() {
               ))}
             </tbody>
           </table>
+          </div>
         )
       )}
     </Layout>

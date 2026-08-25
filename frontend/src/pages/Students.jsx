@@ -433,6 +433,7 @@ function Students() {
             Showing <strong>{students.length}</strong> student(s) —{" "}
             {filters.program} · {filters.department} · {filters.batchYear} Batch
           </p>
+          <div className="table-responsive">
           <table className="table table-striped table-bordered table-hover">
             <thead className="table-dark">
               <tr>
@@ -495,6 +496,7 @@ function Students() {
               )}
             </tbody>
           </table>
+          </div>
         </>
       )}
 

@@ -523,6 +523,7 @@ function HrContacts() {
             <p className="fw-semibold mt-2 mb-1 text-dark">No matches for that filter</p>
           </div>
         ) : (
+          <div className="table-responsive">
           <table className="table table-striped table-hover hrc-table">
             <thead className="table-dark">
               <tr>
@@ -569,6 +570,7 @@ function HrContacts() {
               ))}
             </tbody>
           </table>
+          </div>
         )
       )}
     </Layout>

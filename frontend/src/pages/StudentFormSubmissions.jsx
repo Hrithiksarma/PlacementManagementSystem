@@ -258,6 +258,7 @@ function StudentFormSubmissions({ highlightSubmissionId, onHighlightHandled }) {
           <p className="text-muted mb-2">
             Showing <strong>{submissions.length}</strong> registration(s)
           </p>
+          <div className="table-responsive">
           <table className="table table-striped table-bordered table-hover">
             <thead className="table-dark">
               <tr>
@@ -378,6 +379,7 @@ function StudentFormSubmissions({ highlightSubmissionId, onHighlightHandled }) {
               ))}
             </tbody>
           </table>
+          </div>
         </>
       )}
 

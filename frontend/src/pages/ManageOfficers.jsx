@@ -161,6 +161,7 @@ function ManageOfficers() {
 
       <div className="card">
         <div className="card-header fw-semibold">Officer Accounts</div>
+        <div className="table-responsive">
         <table className="table table-striped mb-0">
           <thead>
             <tr>
@@ -204,6 +205,7 @@ function ManageOfficers() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </Layout>
   );
