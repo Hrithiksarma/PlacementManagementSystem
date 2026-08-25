@@ -21,4 +21,10 @@ public interface DriveService {
     List<Drive> getDrivesByStatus(String status);
 
     List<Drive> getDrivesByCompanyId(Integer companyId);
+
+    /** Sets/updates a drive's JD URL and (re-)extracts its text from it. */
+    Drive setJdUrl(Integer id, String jdUrl);
+
+    /** Re-runs JD text extraction from the drive's already-stored jdUrl. */
+    Drive extractJd(Integer id);
 }

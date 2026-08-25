@@ -9,9 +9,12 @@ import com.pmrs.backend.repository.CompanyRepository;
 import com.pmrs.backend.repository.DriveFormSubmissionRepository;
 import com.pmrs.backend.repository.DriveRepository;
 import com.pmrs.backend.repository.HRContactRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,22 +30,27 @@ import java.util.stream.Collectors;
 @Service
 public class DriveFormServiceImpl implements DriveFormService {
 
+    private static final Logger log = LoggerFactory.getLogger(DriveFormServiceImpl.class);
+
     private final DriveFormSubmissionRepository submissionRepository;
     private final CompanyRepository             companyRepository;
     private final HRContactRepository           hrContactRepository;
     private final DriveRepository               driveRepository;
     private final PenaltyService                penaltyService;
+    private final DocumentTextExtractionService documentTextExtractionService;
 
     public DriveFormServiceImpl(DriveFormSubmissionRepository submissionRepository,
                                 CompanyRepository             companyRepository,
                                 HRContactRepository           hrContactRepository,
                                 DriveRepository               driveRepository,
-                                PenaltyService                penaltyService) {
+                                PenaltyService                penaltyService,
+                                DocumentTextExtractionService documentTextExtractionService) {
         this.submissionRepository = submissionRepository;
         this.companyRepository    = companyRepository;
         this.hrContactRepository  = hrContactRepository;
         this.driveRepository      = driveRepository;
         this.penaltyService       = penaltyService;
+        this.documentTextExtractionService = documentTextExtractionService;
     }
 
     @Override
@@ -100,6 +108,20 @@ public class DriveFormServiceImpl implements DriveFormService {
         drive.setStatus("Upcoming");
         drive.setMinCgpa(submission.getMinCgpa());
         drive.setMaxBacklogs(submission.getMaxBacklogs());
+
+        String jdUrl = blankToNull(submission.getJdUrl());
+        if (jdUrl != null) {
+            drive.setJdUrl(jdUrl);
+            String jdText = documentTextExtractionService.extractText(jdUrl);
+            if (jdText != null) {
+                drive.setJdText(jdText);
+                drive.setJdExtractedAt(LocalDateTime.now());
+            } else {
+                log.warn("Could not extract JD text for drive from submission {} (url: {}) — "
+                        + "jdUrl saved, jdText left blank for now.", submissionId, jdUrl);
+            }
+        }
+
         Drive savedDrive = driveRepository.save(drive);
         penaltyService.onDriveCreated(savedDrive);
 

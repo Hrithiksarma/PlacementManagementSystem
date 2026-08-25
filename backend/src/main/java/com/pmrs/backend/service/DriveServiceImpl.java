@@ -5,6 +5,7 @@ import com.pmrs.backend.exception.ResourceNotFoundException;
 import com.pmrs.backend.repository.DriveRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -12,10 +13,13 @@ public class DriveServiceImpl implements DriveService {
 
     private final DriveRepository driveRepository;
     private final PenaltyService  penaltyService;
+    private final DocumentTextExtractionService documentTextExtractionService;
 
-    public DriveServiceImpl(DriveRepository driveRepository, PenaltyService penaltyService) {
+    public DriveServiceImpl(DriveRepository driveRepository, PenaltyService penaltyService,
+                            DocumentTextExtractionService documentTextExtractionService) {
         this.driveRepository = driveRepository;
         this.penaltyService  = penaltyService;
+        this.documentTextExtractionService = documentTextExtractionService;
     }
 
     @Override
@@ -94,5 +98,27 @@ public class DriveServiceImpl implements DriveService {
     @Override
     public List<Drive> getDrivesByCompanyId(Integer companyId) {
         return driveRepository.findByCompany_CompanyId(companyId);
+    }
+
+    @Override
+    public Drive setJdUrl(Integer id, String jdUrl) {
+        Drive drive = getDriveById(id);
+        drive.setJdUrl(jdUrl);
+        String jdText = documentTextExtractionService.extractText(jdUrl);
+        drive.setJdText(jdText);
+        drive.setJdExtractedAt(jdText != null ? LocalDateTime.now() : null);
+        return driveRepository.save(drive);
+    }
+
+    @Override
+    public Drive extractJd(Integer id) {
+        Drive drive = getDriveById(id);
+        if (drive.getJdUrl() == null || drive.getJdUrl().isBlank()) {
+            throw new IllegalArgumentException("Drive " + id + " has no JD URL set yet.");
+        }
+        String jdText = documentTextExtractionService.extractText(drive.getJdUrl());
+        drive.setJdText(jdText);
+        drive.setJdExtractedAt(jdText != null ? LocalDateTime.now() : null);
+        return driveRepository.save(drive);
     }
 }

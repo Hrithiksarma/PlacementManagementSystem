@@ -2,6 +2,7 @@ package com.pmrs.backend.controller;
 
 import com.pmrs.backend.dto.NotifyStudentsRequest;
 import com.pmrs.backend.dto.UpdateDriveStatusRequest;
+import com.pmrs.backend.dto.UpdateJdRequest;
 import com.pmrs.backend.entity.Drive;
 import com.pmrs.backend.entity.Student;
 import com.pmrs.backend.service.DriveEligibilityService;
@@ -89,6 +90,18 @@ public class DriveController {
     public Drive updateStatus(@PathVariable Integer id,
                               @Valid @RequestBody UpdateDriveStatusRequest request) {
         return driveService.updateStatus(id, request.getStatus());
+    }
+
+    @Operation(summary = "Set/update a drive's JD URL and extract its text")
+    @PutMapping("/{id}/jd")
+    public Drive setJd(@PathVariable Integer id, @Valid @RequestBody UpdateJdRequest request) {
+        return driveService.setJdUrl(id, request.getJdUrl());
+    }
+
+    @Operation(summary = "Re-run JD text extraction from the drive's already-stored JD URL")
+    @PostMapping("/{id}/jd/extract")
+    public Drive extractJd(@PathVariable Integer id) {
+        return driveService.extractJd(id);
     }
 
     @Operation(summary = "Delete drive by ID")
