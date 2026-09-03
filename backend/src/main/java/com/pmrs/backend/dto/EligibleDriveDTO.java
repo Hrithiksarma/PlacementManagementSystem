@@ -19,6 +19,10 @@ public class EligibleDriveDTO {
     private boolean    eligible = true;
     private String     eligibilityReason;
     private boolean    upgradationBlocked;
+    private boolean    hasJd;
+    /** Quick fit score (0-100, no LLM call) — null until computed, only
+     *  attempted for drives with both a JD and a cached resume available. */
+    private Integer    fitScore;
 
     public EligibleDriveDTO() {}
 
@@ -63,4 +67,10 @@ public class EligibleDriveDTO {
 
     public boolean    isUpgradationBlocked()               { return upgradationBlocked; }
     public void       setUpgradationBlocked(boolean v)     { this.upgradationBlocked = v; }
+
+    public boolean    isHasJd()                             { return hasJd; }
+    public void       setHasJd(boolean v)                   { this.hasJd = v; }
+
+    public Integer    getFitScore()                         { return fitScore; }
+    public void       setFitScore(Integer v)                { this.fitScore = v; }
 }

@@ -1,5 +1,6 @@
 package com.pmrs.backend.controller;
 
+import com.pmrs.backend.dto.DriveSkillsGapSummaryDTO;
 import com.pmrs.backend.dto.NotifyStudentsRequest;
 import com.pmrs.backend.dto.UpdateDriveStatusRequest;
 import com.pmrs.backend.dto.UpdateJdRequest;
@@ -8,6 +9,7 @@ import com.pmrs.backend.entity.Student;
 import com.pmrs.backend.service.DriveEligibilityService;
 import com.pmrs.backend.service.DriveReminderService;
 import com.pmrs.backend.service.DriveService;
+import com.pmrs.backend.service.ResumeJdMatchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,13 +29,16 @@ public class DriveController {
     private final DriveService             driveService;
     private final DriveEligibilityService  driveEligibilityService;
     private final DriveReminderService     driveReminderService;
+    private final ResumeJdMatchService     resumeJdMatchService;
 
     public DriveController(DriveService             driveService,
                            DriveEligibilityService  driveEligibilityService,
-                           DriveReminderService     driveReminderService) {
+                           DriveReminderService     driveReminderService,
+                           ResumeJdMatchService     resumeJdMatchService) {
         this.driveService             = driveService;
         this.driveEligibilityService  = driveEligibilityService;
         this.driveReminderService     = driveReminderService;
+        this.resumeJdMatchService     = resumeJdMatchService;
     }
 
     @Operation(summary = "Get students eligible for a drive")
@@ -102,6 +107,12 @@ public class DriveController {
     @PostMapping("/{id}/jd/extract")
     public Drive extractJd(@PathVariable Integer id) {
         return driveService.extractJd(id);
+    }
+
+    @Operation(summary = "Aggregate skills-gap data across every student who's analyzed their fit against this drive")
+    @GetMapping("/{id}/skills-gap-summary")
+    public DriveSkillsGapSummaryDTO getSkillsGapSummary(@PathVariable Integer id) {
+        return resumeJdMatchService.getSkillsGapSummary(id);
     }
 
     @Operation(summary = "Delete drive by ID")

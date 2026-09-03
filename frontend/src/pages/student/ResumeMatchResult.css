@@ -1,0 +1,256 @@
+.rm-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 0 32px;
+  max-width: 1140px;
+}
+
+.rm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.rm-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@media (max-width: 860px) {
+  .rm-grid { grid-template-columns: 1fr; }
+}
+
+.rm-back {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  align-self: flex-start;
+}
+
+.rm-back:hover { color: #2563eb; }
+
+.rm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rm-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+.rm-sub {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.rm-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 22px;
+}
+
+.rm-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.rm-section-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.rm-section-sub {
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+/* ── Score ───────────────────────────────────────────────────────────────── */
+
+.rm-hero {
+  background: linear-gradient(135deg, #faf5ff 0%, #fff 55%);
+}
+
+.rm-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.rm-score-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rm-score-value {
+  font-size: 3.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.rm-score-label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+/* ── Skill chips ─────────────────────────────────────────────────────────── */
+
+.rm-skill-group {
+  margin-bottom: 16px;
+}
+
+.rm-skill-group:last-child { margin-bottom: 0; }
+
+.rm-skill-group-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.rm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rm-chip {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+
+.rm-chip-matched {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.rm-chip-missing {
+  background: #fefce8;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+/* ── Write-up ────────────────────────────────────────────────────────────── */
+
+.rm-writeup {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+/* ── Interview questions ─────────────────────────────────────────────────── */
+
+.rm-questions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  counter-reset: rm-q;
+}
+
+.rm-question {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #334155;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+.rm-question-icon {
+  color: #7c3aed;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── Empty / prompt state ───────────────────────────────────────────────── */
+
+.rm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  gap: 12px;
+  text-align: center;
+}
+
+.rm-empty-icon { opacity: 0.5; }
+.rm-empty p    { font-size: 0.84rem; margin: 0; }
+
+.rm-reanalyze-btn {
+  padding: 9px 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  background: #7c3aed;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.rm-reanalyze-btn:hover:not(:disabled) { background: #6d28d9; }
+.rm-reanalyze-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+
+.rm-tooltip {
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 9px 13px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Skeleton ────────────────────────────────────────────────────────────── */
+
+.rm-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8eef4 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: rm-shimmer 1.4s infinite;
+  border-radius: 10px;
+}
+
+@keyframes rm-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

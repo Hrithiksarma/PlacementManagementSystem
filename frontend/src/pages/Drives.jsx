@@ -1,7 +1,10 @@
 import { useEffect, useState, Fragment } from "react";
-import { Eye, EyeOff, Lock } from "lucide-react";
+import { Eye, EyeOff, Lock, FileText, RefreshCw, BarChart3 } from "lucide-react";
 import Layout from "../components/Layout";
-import { getAllDrives, addDrive, updateDrive, updateDriveStatus, deleteDrive } from "../services/driveService";
+import {
+  getAllDrives, addDrive, updateDrive, updateDriveStatus, deleteDrive,
+  setDriveJd, extractDriveJd, getDriveSkillsGapSummary,
+} from "../services/driveService";
 import { getAllCompanies } from "../services/companyService";
 import { isAdmin } from "../services/authService";
 import "./Drives.css";
@@ -41,6 +44,10 @@ function Drives() {
   const [editingId,   setEditingId]   = useState(null);
   const [form,        setForm]        = useState(emptyForm);
   const [expandedDatesId, setExpandedDatesId] = useState(null);
+  const [jdUrlDraft,  setJdUrlDraft]  = useState("");
+  const [jdBusy,      setJdBusy]      = useState(false);
+  const [skillsGap,   setSkillsGap]   = useState(null);
+  const [skillsGapLoading, setSkillsGapLoading] = useState(false);
 
   const admin = isAdmin();
 
@@ -144,6 +151,48 @@ function Drives() {
       const data = err.response?.data;
       const message = typeof data === "string" ? data : data?.message;
       alert(message ?? "Failed to update drive status");
+    }
+  };
+
+  const toggleExpanded = (drive) => {
+    const isExpanded = expandedDatesId === drive.driveId;
+    setExpandedDatesId(isExpanded ? null : drive.driveId);
+    setJdUrlDraft(isExpanded ? "" : (drive.jdUrl ?? ""));
+    setSkillsGap(null);
+    if (!isExpanded && drive.jdText) {
+      setSkillsGapLoading(true);
+      getDriveSkillsGapSummary(drive.driveId)
+        .then((res) => setSkillsGap(res.data))
+        .catch((err) => console.error("Error loading skills-gap summary:", err))
+        .finally(() => setSkillsGapLoading(false));
+    }
+  };
+
+  const handleSaveJd = async (drive) => {
+    setJdBusy(true);
+    try {
+      await setDriveJd(drive.driveId, jdUrlDraft);
+      if (hasSearched) await handleSearch();
+    } catch (err) {
+      console.error(err);
+      const data = err.response?.data;
+      alert((typeof data === "string" ? data : data?.message) ?? "Failed to set JD URL");
+    } finally {
+      setJdBusy(false);
+    }
+  };
+
+  const handleReextractJd = async (drive) => {
+    setJdBusy(true);
+    try {
+      await extractDriveJd(drive.driveId);
+      if (hasSearched) await handleSearch();
+    } catch (err) {
+      console.error(err);
+      const data = err.response?.data;
+      alert((typeof data === "string" ? data : data?.message) ?? "Failed to re-extract JD text");
+    } finally {
+      setJdBusy(false);
     }
   };
 
@@ -384,7 +433,7 @@ function Drives() {
                       <td>
                         <button
                           className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
-                          onClick={() => setExpandedDatesId(isExpanded ? null : drive.driveId)}
+                          onClick={() => toggleExpanded(drive)}
                         >
                           {isExpanded ? <EyeOff size={13} /> : <Eye size={13} />}
                           {isExpanded ? "Hide" : "View"}
@@ -437,6 +486,109 @@ function Drives() {
                             <div><span className="text-muted">Exam:</span> {formatDate(drive.driveDate)}</div>
                             <div><span className="text-muted">Final Selection:</span> {formatDate(drive.finalSelectionDate)}</div>
                           </div>
+
+                          <hr className="my-3" />
+
+                          <div className="d-flex align-items-center gap-2 mb-2">
+                            <FileText size={14} className="text-muted" />
+                            <span className="fw-semibold">Job Description</span>
+                            {drive.jdExtractedAt && (
+                              <span className="text-muted" style={{ fontSize: "0.72rem" }}>
+                                — extracted {new Date(drive.jdExtractedAt).toLocaleString("en-IN")}
+                              </span>
+                            )}
+                          </div>
+                          <div className="d-flex gap-2 mb-2" style={{ maxWidth: 640 }}>
+                            <input
+                              className="form-control form-control-sm"
+                              placeholder="Google Drive JD link"
+                              value={jdUrlDraft}
+                              onChange={(e) => setJdUrlDraft(e.target.value)}
+                            />
+                            <button
+                              className="btn btn-sm btn-outline-primary text-nowrap"
+                              disabled={jdBusy || !jdUrlDraft}
+                              onClick={() => handleSaveJd(drive)}
+                            >
+                              Save & Extract
+                            </button>
+                            {drive.jdUrl && (
+                              <button
+                                className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 text-nowrap"
+                                disabled={jdBusy}
+                                onClick={() => handleReextractJd(drive)}
+                                title="Re-run extraction from the currently saved JD URL"
+                              >
+                                <RefreshCw size={12} />
+                                Re-extract
+                              </button>
+                            )}
+                          </div>
+                          {drive.jdText ? (
+                            <div
+                              className="border rounded p-2 bg-white text-muted"
+                              style={{ maxHeight: 140, overflowY: "auto", fontSize: "0.78rem", maxWidth: 640, whiteSpace: "pre-wrap" }}
+                            >
+                              {drive.jdText}
+                            </div>
+                          ) : (
+                            <div className="text-muted" style={{ fontSize: "0.78rem" }}>
+                              No JD text extracted yet.
+                            </div>
+                          )}
+
+                          {drive.jdText && (
+                            <>
+                              <hr className="my-3" />
+                              <div className="d-flex align-items-center gap-2 mb-2">
+                                <BarChart3 size={14} className="text-muted" />
+                                <span className="fw-semibold">Cohort Skills-Gap Summary</span>
+                              </div>
+                              {skillsGapLoading ? (
+                                <div className="text-muted" style={{ fontSize: "0.78rem" }}>Loading…</div>
+                              ) : !skillsGap || skillsGap.totalAnalyses === 0 ? (
+                                <div className="text-muted" style={{ fontSize: "0.78rem" }}>
+                                  No students have analyzed their fit against this drive yet.
+                                </div>
+                              ) : (
+                                <div style={{ maxWidth: 640 }}>
+                                  <div className="text-muted mb-2" style={{ fontSize: "0.72rem" }}>
+                                    Based on {skillsGap.totalAnalyses} student analys{skillsGap.totalAnalyses === 1 ? "is" : "es"}
+                                  </div>
+                                  <div className="row g-3">
+                                    <div className="col-md-6">
+                                      <div className="fw-semibold mb-1" style={{ fontSize: "0.75rem", color: "#92400e" }}>
+                                        Most Commonly Missing
+                                      </div>
+                                      {skillsGap.topMissingSkills.length === 0 ? (
+                                        <span className="text-muted" style={{ fontSize: "0.76rem" }}>None</span>
+                                      ) : (
+                                        <ul className="mb-0 ps-3" style={{ fontSize: "0.78rem" }}>
+                                          {skillsGap.topMissingSkills.map((s) => (
+                                            <li key={s.skillName}>{s.skillName} <span className="text-muted">({s.count})</span></li>
+                                          ))}
+                                        </ul>
+                                      )}
+                                    </div>
+                                    <div className="col-md-6">
+                                      <div className="fw-semibold mb-1" style={{ fontSize: "0.75rem", color: "#15803d" }}>
+                                        Most Commonly Matched
+                                      </div>
+                                      {skillsGap.topMatchedSkills.length === 0 ? (
+                                        <span className="text-muted" style={{ fontSize: "0.76rem" }}>None</span>
+                                      ) : (
+                                        <ul className="mb-0 ps-3" style={{ fontSize: "0.78rem" }}>
+                                          {skillsGap.topMatchedSkills.map((s) => (
+                                            <li key={s.skillName}>{s.skillName} <span className="text-muted">({s.count})</span></li>
+                                          ))}
+                                        </ul>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
                         </td>
                       </tr>
                     )}

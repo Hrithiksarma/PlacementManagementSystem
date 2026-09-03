@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
-import { ClipboardList, GraduationCap, Trophy, Check, Lock, FileText, ExternalLink, Eye, EyeOff } from "lucide-react";
+import {
+  ClipboardList, GraduationCap, Trophy, Check, Lock, FileText, ExternalLink, Eye, EyeOff,
+  Sparkles, ThumbsUp, Wrench,
+} from "lucide-react";
 import Layout from "../../components/Layout";
 import { getStudentProfile } from "../../services/studentPortalService";
+import { getResumeCritique } from "../../services/resumeMatchService";
 import "./MyProfile.css";
 
 const PLACEMENT_COLOR = {
@@ -74,6 +78,82 @@ function DocRow({ label, url }) {
             height="100%"
             style={{ border: "none" }}
           />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResumeCritique({ resumeUrl }) {
+  const [critique, setCritique] = useState(null);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState(null);
+
+  const runCritique = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getResumeCritique();
+      setCritique(res.data);
+    } catch (err) {
+      const data = err?.response?.data;
+      const msg =
+        (typeof data === "string" && data ? data : null) ||
+        data?.message ||
+        data?.error ||
+        "Couldn't critique your resume right now. Please try again.";
+      setError(String(msg));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mp-card mp-card--full">
+      <div className="mp-card-title d-flex align-items-center justify-content-between">
+        <span className="d-flex align-items-center gap-2">
+          <Sparkles size={16} />
+          Resume Critique
+        </span>
+        <button
+          className="mp-critique-btn"
+          disabled={!resumeUrl || loading}
+          onClick={runCritique}
+          title={!resumeUrl ? "Upload a resume first" : undefined}
+        >
+          {loading ? "Analyzing…" : critique ? "Re-run" : "Critique My Resume"}
+        </button>
+      </div>
+
+      {!resumeUrl ? (
+        <p className="mp-critique-empty">Upload a resume to get a critique.</p>
+      ) : error ? (
+        <div className="alert alert-danger py-2 mb-0">{error}</div>
+      ) : !critique ? (
+        <p className="mp-critique-empty">
+          Get instant feedback on formatting, clarity, and ATS-friendliness.
+        </p>
+      ) : (
+        <div className="mp-critique-result">
+          <p className="mp-critique-overall">{critique.overall}</p>
+          <div className="mp-critique-cols">
+            <div>
+              <div className="mp-critique-col-title mp-critique-col-good">
+                <ThumbsUp size={12} /> Strengths
+              </div>
+              <ul className="mp-critique-list">
+                {(critique.strengths ?? []).map((s, i) => <li key={i}>{s}</li>)}
+              </ul>
+            </div>
+            <div>
+              <div className="mp-critique-col-title mp-critique-col-fix">
+                <Wrench size={12} /> To Improve
+              </div>
+              <ul className="mp-critique-list">
+                {(critique.improvements ?? []).map((s, i) => <li key={i}>{s}</li>)}
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -201,6 +281,8 @@ function MyProfile() {
               <DocRow label="Grade Card" url={profile?.gradeSheetUrl} />
             </div>
           </div>
+
+          <ResumeCritique resumeUrl={profile?.resumeUrl} />
 
           <div className="mp-card mp-card--full">
             <div className="mp-card-title d-flex align-items-center gap-2">

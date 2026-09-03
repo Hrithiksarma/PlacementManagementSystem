@@ -24,6 +24,7 @@ import MyProfile        from "./pages/student/MyProfile";
 import EligibleDrives   from "./pages/student/EligibleDrives";
 import MyApplications   from "./pages/student/MyApplications";
 import PlacementStatus  from "./pages/student/PlacementStatus";
+import ResumeMatchResult from "./pages/student/ResumeMatchResult";
 
 import StudentRoute    from "./routes/StudentRoute";
 import AdminRoute      from "./routes/AdminRoute";
@@ -61,6 +62,9 @@ function App() {
         } />
         <Route path="/student/placement-status" element={
           <StudentRoute><PlacementStatus /></StudentRoute>
+        } />
+        <Route path="/student/drives/:driveId/analysis" element={
+          <StudentRoute><ResumeMatchResult /></StudentRoute>
         } />
 
         {/* ── Admin / Placement Officer ────────────────────────────── */}

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
-  AlertTriangle, X, Target, CheckCircle2, IndianRupee, CalendarDays, Lock, ArrowRight,
+  AlertTriangle, X, Target, CheckCircle2, IndianRupee, CalendarDays, Lock, ArrowRight, Sparkles,
 } from "lucide-react";
 import Layout from "../../components/Layout";
 import { getEligibleDrives, applyToDrive, getPenaltyStatus } from "../../services/studentPortalService";
+import { analyzeResumeMatch } from "../../services/resumeMatchService";
 import "./EligibleDrives.css";
 
 const TIER_COLOR = {
@@ -40,11 +41,18 @@ function DriveStatusBadge({ status }) {
   );
 }
 
+function FitScoreBadge({ score }) {
+  if (score == null) return null;
+  const tone = score >= 70 ? "ed-fit-high" : score >= 40 ? "ed-fit-mid" : "ed-fit-low";
+  return <span className={`ed-fit-badge ${tone}`}>{score}% fit</span>;
+}
+
 function EligibleDrives() {
   const [drives,      setDrives]      = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState(null);
   const [applying,    setApplying]    = useState(null);
+  const [analyzing,   setAnalyzing]   = useState(null);
   const [toast,       setToast]       = useState(null);
   const [filterTier,  setFilterTier]  = useState("All");
   const [filterStatus,setFilterStatus]= useState("All");
@@ -52,6 +60,7 @@ function EligibleDrives() {
   const [penalty, setPenalty] = useState(null);
 
   const location       = useLocation();
+  const navigate        = useNavigate();
   const highlightId    = location.state?.highlightDriveId ?? null;
   const highlightedRef = useRef(false);
 
@@ -99,6 +108,24 @@ function EligibleDrives() {
       showToast(String(msg), "error");
     } finally {
       setApplying(null);
+    }
+  };
+
+  const handleAnalyze = async (driveId) => {
+    setAnalyzing(driveId);
+    try {
+      const res = await analyzeResumeMatch(driveId);
+      navigate(`/student/drives/${driveId}/analysis`, { state: { result: res.data } });
+    } catch (err) {
+      const data = err?.response?.data;
+      const msg =
+        (typeof data === "string" && data ? data : null) ||
+        data?.message ||
+        data?.error ||
+        "Couldn't analyze your fit right now. Please try again.";
+      showToast(String(msg), "error");
+    } finally {
+      setAnalyzing(null);
     }
   };
 
@@ -223,6 +250,7 @@ function EligibleDrives() {
                     <div className="ed-card-badges">
                       {d.companyTier && <TierBadge tier={d.companyTier} />}
                       {d.driveStatus && <DriveStatusBadge status={d.driveStatus} />}
+                      <FitScoreBadge score={d.fitScore} />
                       {d.alreadyApplied && (
                         <span className="ed-applied-badge d-inline-flex align-items-center gap-1">
                           <CheckCircle2 size={12} />Applied
@@ -269,6 +297,17 @@ function EligibleDrives() {
 
                   {/* Action */}
                   <div className="ed-card-footer">
+                    {d.hasJd && (
+                      <button
+                        className="ed-analyze-btn d-inline-flex align-items-center justify-content-center gap-1"
+                        disabled={analyzing === d.driveId}
+                        onClick={() => handleAnalyze(d.driveId)}
+                      >
+                        {analyzing === d.driveId
+                          ? "Analyzing…"
+                          : <><Sparkles size={13} />Analyze My Fit</>}
+                      </button>
+                    )}
                     {d.alreadyApplied ? (
                       <span className="ed-applied-msg d-inline-flex align-items-center gap-1">
                         <CheckCircle2 size={13} />Application Submitted

@@ -45,19 +45,22 @@ public class StudentPortalServiceImpl implements StudentPortalService {
     private final ApplicationRepository         applicationRepository;
     private final EligibilityCriteriaRepository eligibilityCriteriaRepository;
     private final PenaltyService                penaltyService;
+    private final ResumeJdMatchService          resumeJdMatchService;
 
     public StudentPortalServiceImpl(UserRepository userRepository,
                                     StudentRepository studentRepository,
                                     DriveRepository driveRepository,
                                     ApplicationRepository applicationRepository,
                                     EligibilityCriteriaRepository eligibilityCriteriaRepository,
-                                    PenaltyService penaltyService) {
+                                    PenaltyService penaltyService,
+                                    ResumeJdMatchService resumeJdMatchService) {
         this.userRepository               = userRepository;
         this.studentRepository            = studentRepository;
         this.driveRepository              = driveRepository;
         this.applicationRepository        = applicationRepository;
         this.eligibilityCriteriaRepository = eligibilityCriteriaRepository;
         this.penaltyService               = penaltyService;
+        this.resumeJdMatchService         = resumeJdMatchService;
     }
 
     // ── Resolve username → Student ────────────────────────────────────────────
@@ -246,6 +249,11 @@ public class StudentPortalServiceImpl implements StudentPortalService {
             dto.setEligible(reason == null);
             dto.setEligibilityReason(reason);
             dto.setUpgradationBlocked(upgradationReason != null);
+            boolean hasJd = drive.getJdText() != null && !drive.getJdText().isBlank();
+            dto.setHasJd(hasJd);
+            if (hasJd) {
+                dto.setFitScore(resumeJdMatchService.computeFitScore(s, drive));
+            }
             result.add(dto);
         }
         return result;

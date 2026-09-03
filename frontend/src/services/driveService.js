@@ -18,3 +18,12 @@ export const getEligibleStudentsForDrive = (driveId) =>
 
 export const notifyStudents = (driveId, eventType, studentIds) =>
   axios.post(`${API_URL}/${driveId}/notify`, { eventType, studentIds });
+
+export const setDriveJd = (driveId, jdUrl) =>
+  axios.put(`${API_URL}/${driveId}/jd`, { jdUrl });
+
+export const extractDriveJd = (driveId) =>
+  axios.post(`${API_URL}/${driveId}/jd/extract`);
+
+export const getDriveSkillsGapSummary = (driveId) =>
+  axios.get(`${API_URL}/${driveId}/skills-gap-summary`);
